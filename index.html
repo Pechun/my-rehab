@@ -231,6 +231,33 @@ small.how{display:block;white-space:pre-line;color:var(--muted);font-size:12px;l
 .howto{margin:10px 0 0;padding-left:1.3em;font-size:14px;display:grid;gap:4px}
 .capimg{display:block;width:100%;border-radius:12px;border:1px solid var(--line)}
 .caponly{display:none}
+#capHost{position:fixed;left:-10000px;top:0;pointer-events:none}
+.capc{--bg:#ffffff;--surface:#ffffff;--raise:#eef1f3;--line:#d4dbdf;--fg:#152027;--muted:#5a6771;--accent:#1d7a71;--gap:#ffffff;--seam-base:#000000;--muscle:var(--mus-l,#c3c7cb);--bad:#c9473c;--good:#2f8a55;
+ width:360px;background:#fff;color:var(--fg);font-family:var(--f-body);padding:18px 18px 14px;box-sizing:border-box;display:grid;gap:12px}
+.cc-hd{border-bottom:2px solid var(--fg);padding-bottom:8px}
+.cc-t{font-size:19px;font-weight:700;display:flex;align-items:center}
+.cc-d{font-family:var(--f-num);font-size:14px;color:var(--muted);margin-top:2px}
+.cc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cc-stats>div{background:var(--raise);border-radius:10px;padding:8px 10px;display:grid}
+.cc-stats small{font-size:11px;color:var(--muted)}
+.cc-stats b{font-family:var(--f-num);font-size:26px;line-height:1.1}
+.cc-stats em{font-style:normal;font-size:12px;color:var(--muted);margin-left:2px}
+.cc-stats i,.cc-row i{font-style:normal;font-size:12px;font-family:var(--f-num);color:var(--muted)}
+.cc-stats i.dn{color:var(--good)}.cc-stats i.up{color:var(--bad)}
+.cc-note{font-size:10.5px;color:var(--muted);margin-top:-6px}
+.cc-body{display:grid}
+.cc-map{display:flex;justify-content:center;gap:18px;background:var(--raise);border-radius:12px;padding:10px 0 6px}
+.cc-map figure{margin:0;display:grid;justify-items:center;gap:2px}
+.cc-map svg{width:108px;height:auto}
+.cc-map figcaption{font-size:11px;color:var(--muted)}
+.cc-rows{display:grid;gap:6px;font-size:13px;line-height:1.45;min-width:0}
+.cc-row{display:grid;grid-template-columns:2.6em 1fr;gap:8px}
+.cc-row b{color:var(--muted);font-weight:500}
+.cc-row i.nw{color:var(--bad);font-weight:700;margin-left:2px}
+.cc-chart .chart{max-height:120px}
+.cc-q{font-size:13px;line-height:1.5;background:var(--raise);border-radius:10px;padding:8px 10px}
+.cc-q b{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-bottom:2px}
+.cc-ft{font-size:10.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:6px}
 .capturing .nocap{display:none!important}
 .capturing .caponly{display:inline}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:calc(100% - 32px);text-align:center}
@@ -250,6 +277,7 @@ small.how{display:block;white-space:pre-line;color:var(--muted);font-size:12px;l
 <nav class="tabs"><div class="tabs-in" id="tabs"></div></nav>
 <div id="sheetRoot"></div>
 <div id="toastRoot"></div>
+<div id="capHost" aria-hidden="true"></div>
 
 <script>
 const pad=n=>String(n).padStart(2,'0');
@@ -300,7 +328,7 @@ const RELIEFS=['休息','熱敷','冰敷','伸展','換姿勢','藥物','貼紮'
 const DURS=['數秒','數分鐘','數小時','整天'];
 const EFF=['沒用','有點用','明顯緩解'];
 const DEF_TRIG=['久坐','走路','上下樓梯','彎腰','起床','運動中','提重物'];
-const APP_VER='2026-10-27-2';
+const APP_VER='2026-10-27-3';
 const STORE='myrehab_v1',DKEYS=['problems','visits','questions','events','daily','meta'];
 const S={tab:'log',sumPid:null,sheet:null,delArm:null,imp:null,copyOut:null,problems:[],visits:[],questions:[],events:[],daily:{},meta:{lastBackup:null}};
 let eid=Date.now();
@@ -552,7 +580,7 @@ function bodyMap(sh){const d=sh.d,c=d.color||'var(--accent)';
  return `<svg class="bm" viewBox="${vbStr(sh.view)}">${figure(sh.view,{fill:id=>d.regions.includes(id)?[c,.95]:d.extend.includes(id)?['var(--extend)',.8]:null,pick:'region'})}</svg>`}
 function vSheet(){const sh=S.sheet;if(!sh)return '';
  if(sh.type==='img')return `<div class="scrim" data-act="sheetClose" data-self="1"><div class="sheet" role="dialog" aria-label="摘要圖片">
-  <h2>摘要圖片</h2>${sh.url?`<img class="capimg" src="${sh.url}" alt="摘要圖片">
+  <h2>摘要圖片</h2>${seg([['compact','重點精簡版'],['full','完整版']],sh.mode,'imgMode')}${sh.url?`<img class="capimg" src="${sh.url}" alt="摘要圖片">
   <p class="sub" style="margin:0">長按圖片 →「加入照片」就會存到相簿；也可以用分享傳給治療所。</p>
   <div class="row2"><button class="btn ghost" data-act="sheetClose">關閉</button>${navigator.share?'<button class="btn" data-act="imgShare">分享</button>':''}</div>`:`<p class="sub">${esc(sh.err||'產生中…')}</p>${sh.err?'<button class="btn ghost" data-act="sheetClose">關閉</button>':''}`}
  </div></div>`;
@@ -614,12 +642,46 @@ async function exportFile(){const name=`my-rehab-備份-${stamp()}.json`,blob=ne
 function validBackup(t){let d;try{d=JSON.parse(String(t).trim())}catch(e){return{err:'格式不對，請確認是完整的備份內容。'}}
  if(!d||typeof d!=='object'||!Array.isArray(d.problems)||!Array.isArray(d.events))return{err:'這不是 my-rehab 的備份。'};return{data:d}}
 let h2iP=null;function loadH2I(){return h2iP||(h2iP=new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='html-to-image.js';sc.onload=()=>ok(window.htmlToImage);sc.onerror=()=>{h2iP=null;no(new Error('load'))};document.head.appendChild(sc)}))}
-async function makeImage(){const el=document.getElementById('sumCap');if(!el)return;S.sheet={type:'img'};render();
+function compactCard(pid){const p=prob(pid);if(!p)return '';const{lv,pv}=lastVisits();
+ const firstK=S.events.filter(e=>e.pid===pid).map(e=>dkey(new Date(e.ts))).sort()[0];
+ const base=lv||{date:firstK&&firstK<p.since?firstK:p.since,hep:[],pseudo:true};
+ const cur=periodStats(pid,base.date,dkey(dayOff(1))),prev=lv&&pv?periodStats(pid,pv.date,lv.date):null,days=Math.max(0,diffDays(TK,base.date));
+ const cnt=f=>{const c={};cur.evs.forEach(e=>f(e).forEach(k=>c[k]=(c[k]||0)+1));return Object.entries(c).sort((a,b)=>b[1]-a[1])};
+ const trig=cnt(e=>e.triggers).slice(0,3),qual=cnt(e=>e.quals),prevQ=new Set(prev?prev.evs.flatMap(e=>e.quals):qual.map(q=>q[0]));
+ const rc={};cur.evs.forEach(e=>Object.entries(e.relief).forEach(([n,v])=>{if(v==null)return;rc[n]=rc[n]||[0,0];rc[n][0]+=v;rc[n][1]++}));
+ const rel=Object.entries(rc).map(([n,[s,c]])=>[n,s/c]).sort((a,b)=>b[1]-a[1]),good=rel.filter(r=>r[1]>=.75).map(r=>r[0]+(r[1]>=1.5?'（明顯）':'')),bad=rel.filter(r=>r[1]<.75).map(r=>r[0]);
+ const hepDays=[];for(let i=1;i<=days;i++){const k=dkey(dayOff(-days+i));if(k===TK&&!(S.daily[TK]&&Object.keys(S.daily[TK].hep).length))continue;hepDays.push(k)}
+ const full=hepDays.filter(k=>S.daily[k]&&base.hep.length&&base.hep.every(h=>S.daily[k].hep[h.id])).length;
+ const areaCnt={};cur.evs.forEach(e=>(e.area||[]).forEach(i=>areaCnt[i]=(areaCnt[i]||0)+1));const amax=Math.max(1,...Object.values(areaCnt));
+ const pins=cur.evs.flatMap(e=>e.pins||[]),views=['front','back'].filter(v=>Object.keys(areaCnt).some(i=>RM[i]&&RM[i].v===v)||pins.some(q=>q.v===v));
+ const fill=id=>areaCnt[id]?[p.color,.7+.3*areaCnt[id]/amax]:null;
+ const topArea=uniq(Object.entries(areaCnt).sort((a,b)=>b[1]-a[1]).map(([i])=>RL[i]).filter(Boolean)).slice(0,3);
+ const dl=(c,pv,dec)=>c==null||pv==null?'':(()=>{const d=c-pv;if(Math.abs(d)<(dec?.05:.5))return '<i>持平</i>';return `<i class="${d<0?'dn':'up'}">${d<0?'↓':'↑'}${Math.abs(d).toFixed(dec)}</i>`})();
+ const row=(k,v)=>v?`<div class="cc-row"><b>${k}</b><span>${v}</span></div>`:'';
+ const openQ=S.questions.filter(q=>!q.asked);
+ return `<div class="capc" id="capCompact">
+  <div class="cc-hd"><div class="cc-t">${pdot(p.color)}${esc(p.name)}</div><div class="cc-d">${md(base.date)} ${base.pseudo?'開始記錄':'回診'} → ${md(TK)}・${days} 天</div></div>
+  <div class="cc-stats"><div><small>平均</small><b>${cur.avg!=null?cur.avg.toFixed(1):'—'}</b>${dl(cur.avg,prev&&prev.avg,1)}</div><div><small>最高</small><b>${cur.max??'—'}</b>${dl(cur.max,prev&&prev.max,0)}</div><div><small>發作</small><b>${cur.evs.length}<em>次</em></b>${dl(cur.evs.length,prev&&prev.evs.length,0)}</div></div>
+  ${prev?'<div class="cc-note">箭頭為與前一次回診區間比較</div>':''}
+  ${views.length?`<div class="cc-map">${views.map(v=>`<figure><svg viewBox="${vbStr(v)}">${figure(v,{fill,noSide:true})}${pinDots(v,pins,18,false)}</svg><figcaption>${v==='front'?'正面':'背面'}</figcaption></figure>`).join('')}</div>`:''}
+  <div class="cc-body"><div class="cc-rows">${row('部位',esc(topArea.join('、')||regionText(p)))}${row('誘發',esc(trig.map(([t,n])=>`${t} ${n}`).join('、')))}${row('有效',esc(good.join('、')))}${row('無效',esc(bad.join('、')))}
+    ${row('性質',qual.map(([q,n])=>esc(q)+' '+n+(prevQ.has(q)?'':'<i class="nw">新</i>')).join('、'))}${base.hep.length?row('作業',`${hepDays.length} 天中有 ${full} 天全部完成`):''}</div></div>
+  <div class="cc-chart">${chart(pid,base.date).replace(/<div class="legend">[\s\S]*$/,'')}</div>
+  ${openQ.length?`<div class="cc-q"><b>想問</b>${openQ.map((q,i)=>`<div>${i+1}. ${esc(q.text)}</div>`).join('')}</div>`:''}
+  <div class="cc-ft">分數 0–10（NRS）・黑線＝每日分數・圓點＝發作・白點＝最痛點・${md(TK)} 產生</div></div>`}
+async function makeCompact(){const pid=S.sumPid&&prob(S.sumPid)&&prob(S.sumPid).status==='active'?S.sumPid:(active()[0]||{}).id;if(!pid)return;
+ S.sheet={type:'img',mode:'compact'};render();
+ try{const lib=await loadH2I();const host=document.getElementById('capHost');host.innerHTML=compactCard(pid);const node=document.getElementById('capCompact');
+  await new Promise(r=>requestAnimationFrame(()=>r()));
+  const opt={pixelRatio:3,backgroundColor:'#ffffff',skipFonts:true,width:node.offsetWidth,height:node.offsetHeight};
+  await lib.toPng(node,opt);const url=await lib.toPng(node,opt);host.innerHTML='';S.sheet={type:'img',mode:'compact',url};render()}
+ catch(e){document.getElementById('capHost').innerHTML='';S.sheet={type:'img',mode:'compact',err:'圖片產生失敗，請再試一次。'};render()}}
+async function makeImage(){const el=document.getElementById('sumCap');if(!el)return;S.sheet={type:'img',mode:'full'};render();
  try{const lib=await loadH2I();const node=document.getElementById('sumCap');node.classList.add('capturing');
   const bg=getComputedStyle(document.body).backgroundColor,w=node.offsetWidth+32,h=node.offsetHeight+32,opt={pixelRatio:Math.min(3,(window.devicePixelRatio||2)),backgroundColor:bg,skipFonts:true,width:w,height:h,style:{margin:'0',padding:'16px',width:w+'px',height:h+'px',boxSizing:'border-box'}};
   await lib.toPng(node,opt);const url=await lib.toPng(node,opt);node.classList.remove('capturing');
-  S.sheet={type:'img',url};render()}catch(e){const n=document.getElementById('sumCap');n&&n.classList.remove('capturing');S.sheet={type:'img',err:'圖片產生失敗，請再試一次。'};render()}}
-async function shareImg(){const u=S.sheet&&S.sheet.url;if(!u)return;try{const b=await (await fetch(u)).blob(),f=new File([b],`my-rehab-摘要-${stamp()}.png`,{type:'image/png'});
+  S.sheet={type:'img',mode:'full',url};render()}catch(e){const n=document.getElementById('sumCap');n&&n.classList.remove('capturing');S.sheet={type:'img',mode:'full',err:'圖片產生失敗，請再試一次。'};render()}}
+async function shareImg(){const u=S.sheet&&S.sheet.url;if(!u)return;try{const b=await (await fetch(u)).blob(),f=new File([b],`my-rehab-${S.sheet.mode==='compact'?'重點':'摘要'}-${stamp()}.png`,{type:'image/png'});
  if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:'my-rehab 摘要'});else downloadBlob(b,f.name)}catch(e){}}
 const H={
  pal:v=>{palKey=v;try{localStorage.setItem('rehab-pal4',v)}catch(e){}applyPal()},
@@ -660,7 +722,8 @@ const H={
  qAdd:()=>{const t=val('newQ');if(!t)return;S.questions.push({id:'q'+Date.now(),text:t,asked:false});toast('會出現在下次摘要')},
  sumPid:v=>{S.sumPid=v},
  inboxOk:()=>{S.inboxMsgs=null},
- saveImg:()=>{makeImage();return 'stop'},
+ saveImg:()=>{makeCompact();return 'stop'},
+ imgMode:v=>{if(S.sheet&&S.sheet.mode===v)return 'stop';if(v==='full'){S.sheet=null;render();makeImage()}else makeCompact();return 'stop'},
  imgShare:()=>{shareImg();return 'stop'},
  exportFile:()=>{exportFile();return 'stop'},
  copyData:()=>{const t=backupJSON();if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>{S.copyOut=null;toast('已複製全部資料');render()},()=>{S.copyOut=t;render()});return 'stop'}S.copyOut=t},
