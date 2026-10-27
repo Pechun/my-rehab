@@ -219,6 +219,9 @@ svg.zoom{width:100%;height:auto;max-height:58vh;background:var(--bg);border-radi
 .hep{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding-block:8px;font-size:14px}
 .hep+.hep{border-top:1px solid var(--line)}
 .hep small{color:var(--muted)}
+small.how{display:block;white-space:pre-line;color:var(--muted);font-size:12px;line-height:1.55;margin-top:2px}
+.paste{margin-top:10px}
+.paste summary{font-size:14px}
 .hep button{border:0;background:none;color:var(--muted);font-size:18px;padding:0 6px}
 .evdel{border:0;background:none;color:var(--muted);font-size:12px;padding:6px 0 0;cursor:pointer}
 .evdel.arm{color:var(--bad);font-weight:700}
@@ -397,7 +400,7 @@ function vToday(){const ps=active(),r=S.daily[TK]||{scores:{},hep:{}},{lv}=lastV
  <div class="card"><div class="lbl">今天整體幾分</div>
   ${ps.length?'':'<div class="empty">建立第一個問題後，這裡每天打分數。</div>'}${ps.map(p=>`<div class="prow"><div class="nm"><span class="pn2">${pdot(p.color)}${esc(p.name)}</span><span>${r.scores[p.id]!=null?r.scores[p.id]+' 分':'未填'}</span></div>${nrs(r.scores[p.id],'dscore',p.id+'|',true)}</div>`).join('')}</div>
  <div class="card"><div class="lbl">居家作業<span class="hint">${lv?md(lv.date)+' 回診交代':''}</span></div>
-  ${lv&&lv.hep.length?lv.hep.map(h=>`<button class="chk ${r.hep[h.id]?'on':''}" data-act="hep" data-v="${h.id}"><span class="box">${CHECK}</span><span class="t">${esc(h.name)}<small>${esc(h.dose)}</small></span></button>`).join(''):'<div class="empty">目前沒有居家作業。</div>'}</div>
+  ${lv&&lv.hep.length?lv.hep.map(h=>`<button class="chk ${r.hep[h.id]?'on':''}" data-act="hep" data-v="${h.id}"><span class="box">${CHECK}</span><span class="t">${esc(h.name)}<small>${esc(h.dose)}</small>${h.how?`<small class="how">${esc(h.how)}</small>`:''}</span></button>`).join(''):'<div class="empty">目前沒有居家作業。</div>'}</div>
  <div class="card"><div class="lbl">今天的事件<span class="hint">${evs.length} 筆</span></div>
   ${evs.length?evs.map(e=>evRow(e,true,true)).join(''):'<div class="empty">今天還沒有事件紀錄。</div>'}</div>
  <div class="card"><div class="lbl">下次回診要問</div>
@@ -494,7 +497,7 @@ function vProb(){const act=S.problems.filter(p=>p.status==='active'),fin=S.probl
  <button class="btn ghost" data-act="newProb">＋ 新增問題</button>
  ${fin.length?`<div class="sec">已改善</div>${fin.map(pc).join('')}`:''}
  <div class="sec">回診紀錄</div>
- <div class="card">${vs.map(v=>`<div class="visit"><div class="dt">${md(v.date)} 週${WD[kd(v.date).getDay()]}</div><p>${esc(v.notes)}</p><small>居家作業 ${v.hep.length} 項${v.hep.length?'：'+esc(v.hep.map(h=>h.name).join('、')):''}</small><br><button class="evdel ${S.delArm===v.id?'arm':''}" data-act="visitDel" data-v="${v.id}">${S.delArm===v.id?'確定刪除這次回診？':'刪除'}</button></div>`).join('')||'<div class="empty">還沒有回診紀錄。回診後新增一筆，摘要就會從那天開始算。</div>'}
+ <div class="card">${vs.map(v=>`<div class="visit"><div class="dt">${md(v.date)} 週${WD[kd(v.date).getDay()]}</div><p>${esc(v.notes)}</p><small>居家作業 ${v.hep.length} 項${v.hep.length?'：'+esc(v.hep.map(h=>h.name).join('、')):''}</small><br><button class="evdel" style="margin-right:14px" data-act="editVisit" data-v="${v.id}">修改</button><button class="evdel ${S.delArm===v.id?'arm':''}" data-act="visitDel" data-v="${v.id}">${S.delArm===v.id?'確定刪除這次回診？':'刪除'}</button></div>`).join('')||'<div class="empty">還沒有回診紀錄。回診後新增一筆，摘要就會從那天開始算。</div>'}
   <button class="btn ghost" style="margin-top:8px" data-act="newVisit">＋ 新增回診</button></div>
  <div class="sec">身體圖肌肉顏色</div>
  <div class="card"><div class="swatches">${PAL.map(([k,n,l,d])=>`<button class="sw ${palKey===k?'on':''}" data-act="pal" data-v="${k}"><i style="background:${(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)&&document.documentElement.dataset.theme!=='light'||document.documentElement.dataset.theme==='dark'?d:l}"></i>${n}</button>`).join('')}</div></div>
@@ -520,6 +523,11 @@ function impPanel(){const m=S.imp;if(!m)return '';
   <p class="sub">或把「複製全部資料」的內容貼在這裡：</p><textarea class="inp" id="impText" data-field="impText" style="margin-top:6px;font-size:12px" placeholder="貼上備份內容">${esc(m.text||'')}</textarea>
   ${m.err?`<p class="sub" style="color:var(--bad)">${esc(m.err)}</p>`:''}
   <div class="row2" style="margin-top:8px"><button class="btn ghost" data-act="impCancel">取消</button><button class="btn" data-act="impCheck">檢查貼上的內容</button></div></div>`}
+function parseHep(t){const out=[];let cur=null,n=0;
+ String(t||'').split(/\r?\n/).forEach(l=>{const L=l.trim();if(!L)return;const m=L.match(/^(\d+)\s*[.、．)）]\s*(.+)$/);
+  if(m){const [nm,ds]=m[2].split(/\s*[|｜]\s*/);cur={id:'h'+Date.now()+'_'+(n++),name:nm,dose:ds||'',how:''};out.push(cur)}
+  else if(cur)cur.how+=(cur.how?'\n':'')+L});
+ out.forEach(h=>{if(!h.dose){const d=(h.name+' '+h.how).match(/(\d+\s*[-~～–]\s*\d+|\d+)\s*(次|下|組|秒|分鐘)/);if(d)h.dose=d[0].replace(/\s+/g,'')}});return out}
 function bodyMap(sh){const d=sh.d,c=d.color||'var(--accent)';
  return `<svg class="bm" viewBox="${vbStr(sh.view)}">${figure(sh.view,{fill:id=>d.regions.includes(id)?[c,.95]:d.extend.includes(id)?['var(--extend)',.8]:null,pick:'region'})}</svg>`}
 function vSheet(){const sh=S.sheet;if(!sh)return '';
@@ -542,13 +550,18 @@ function vSheet(){const sh=S.sheet;if(!sh)return '';
   ${sh.isNew?'':`<button class="evdel ${S.delArm===d.id?'arm':''}" style="align-self:center" data-act="probDel" data-v="${d.id}">${S.delArm===d.id?`確定刪除？連同 ${S.events.filter(e=>e.pid===d.id).length} 筆紀錄一起刪除`:'刪除這個問題'}</button>`}
   </div></div>`}
  const d=sh.d;
- return `<div class="scrim" data-act="sheetClose" data-self="1"><div class="sheet" role="dialog" aria-label="新增回診">
-  <h2>新增回診</h2>
+ return `<div class="scrim" data-act="sheetClose" data-self="1"><div class="sheet" role="dialog" aria-label="${sh.edit?'修改回診':'新增回診'}">
+  <h2>${sh.edit?'修改回診':'新增回診'}</h2>
   <div><div class="lbl">日期</div><input class="inp" type="date" id="vDate" data-field="vdate" value="${d.date}"></div>
   <div><div class="lbl">治療師說了什麼<span class="hint">評估、處置、注意事項</span></div><textarea class="inp" id="vNotes" data-field="vnotes" placeholder="例如：臀中肌力量進步，可以恢復慢跑 20 分鐘">${esc(d.notes)}</textarea></div>
-  <div><div class="lbl">居家作業<span class="hint">已帶入上次內容</span></div>
-   ${d.hep.map((h,i)=>`<div class="hep"><span>${esc(h.name)} <small>${esc(h.dose)}</small></span><button data-act="hepDel" data-v="${i}" aria-label="移除">×</button></div>`).join('')}
-   <div class="addrow"><input class="inp" id="hName" placeholder="動作"><input class="inp" id="hDose" placeholder="次數" style="max-width:7.5em"><button class="btn sm ghost" data-act="hepAdd">加入</button></div></div>
+  <div><div class="lbl">居家作業<span class="hint">${sh.edit?'':'已帶入上次內容'}</span></div>
+   ${d.hep.map((h,i)=>`<div class="hep"><span>${esc(h.name)} <small>${esc(h.dose)}</small>${h.how?`<small class="how">${esc(h.how)}</small>`:''}</span><button data-act="hepDel" data-v="${i}" aria-label="移除">×</button></div>`).join('')||'<div class="empty">還沒有居家作業。</div>'}
+   <div class="addrow"><input class="inp" id="hName" placeholder="動作名稱"><input class="inp" id="hDose" placeholder="次數" style="max-width:7.5em"><button class="btn sm ghost" data-act="hepAdd">加入</button></div>
+   <textarea class="inp" id="hHow" placeholder="做法（選填）：姿勢、呼吸、注意事項" style="margin-top:8px;min-height:60px"></textarea>
+   <details class="paste"><summary>一次貼上整份作業</summary>
+    <textarea class="inp" id="hPaste" style="margin-top:8px;min-height:120px" placeholder="1. 動作名稱｜15-20次&#10;做法說明…&#10;2. 下一個動作…"></textarea>
+    <p class="sub">每個「1.」「2.」開頭的行是一個動作，名稱後用「｜」接次數，下面的行會變成做法。</p>
+    <button class="btn sm ghost" style="margin-top:8px" data-act="hepParse">拆成動作加入</button></details></div>
   <div class="row2"><button class="btn ghost" data-act="sheetClose">取消</button><button class="btn" data-act="visitSave">儲存回診</button></div>
  </div></div>`}
 
@@ -651,10 +664,12 @@ const H={
  probSave:()=>{const d=S.sheet.d;if(!d.name.trim()){toast('先幫問題取個名稱');return 'stop'}if(!d.regions.length){toast('至少點選一個主要部位');return 'stop'}
   const i=S.problems.findIndex(p=>p.id===d.id);if(i<0)S.problems.push(d);else S.problems[i]=d;
     S.sheet=null;toast('已儲存')},
+ editVisit:v=>{const x=S.visits.find(y=>y.id===v);if(x)S.sheet={type:'visit',edit:true,d:JSON.parse(JSON.stringify(x))}},
  newVisit:()=>{const{lv}=lastVisits();S.sheet={type:'visit',d:{id:'v'+Date.now(),date:TK,notes:'',hep:lv?JSON.parse(JSON.stringify(lv.hep)):[]}}},
  hepDel:v=>{S.sheet.d.hep.splice(+v,1)},
- hepAdd:()=>{const n=val('hName');if(!n)return;S.sheet.d.hep.push({id:'h'+Date.now(),name:n,dose:val('hDose')})},
- visitSave:()=>{S.visits.push(S.sheet.d);S.sheet=null;toast('回診已記錄，摘要從今天重新起算')},
+ hepAdd:()=>{const n=val('hName');if(!n){toast('先填動作名稱');return 'stop'}S.sheet.d.hep.push({id:'h'+Date.now(),name:n,dose:val('hDose'),how:val('hHow')})},
+ hepParse:()=>{const items=parseHep(val('hPaste'));if(!items.length){toast('沒有找到「1.」開頭的動作');return 'stop'}S.sheet.d.hep.push(...items);toast(`已加入 ${items.length} 個動作`)},
+ visitSave:()=>{const d=S.sheet.d,i=S.visits.findIndex(v=>v.id===d.id);if(i>=0){S.visits[i]=d;S.sheet=null;toast('已更新回診')}else{S.visits.push(d);S.sheet=null;toast('回診已記錄，摘要從今天重新起算')}},
  sheetClose:(v,el,e)=>{if(el.dataset.self&&e.target!==el)return 'stop';S.sheet=null;S.delArm=null},
 };
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el)return;
