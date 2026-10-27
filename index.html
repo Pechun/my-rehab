@@ -300,6 +300,7 @@ const RELIEFS=['休息','熱敷','冰敷','伸展','換姿勢','藥物','貼紮'
 const DURS=['數秒','數分鐘','數小時','整天'];
 const EFF=['沒用','有點用','明顯緩解'];
 const DEF_TRIG=['久坐','走路','上下樓梯','彎腰','起床','運動中','提重物'];
+const APP_VER='2026-10-27-2';
 const STORE='myrehab_v1',DKEYS=['problems','visits','questions','events','daily','meta'];
 const S={tab:'log',sumPid:null,sheet:null,delArm:null,imp:null,copyOut:null,problems:[],visits:[],questions:[],events:[],daily:{},meta:{lastBackup:null}};
 let eid=Date.now();
@@ -395,6 +396,7 @@ function vToday(){const ps=active(),r=S.daily[TK]||{scores:{},hep:{}},{lv}=lastV
  const evs=S.events.filter(e=>dkey(new Date(e.ts))===TK).sort((a,b)=>b.ts-a.ts);
  const qs=S.questions;
  return `<section class="stack">
+ ${S.inboxMsgs&&S.inboxMsgs.length?`<div class="banner"><b>收到更新</b>${S.inboxMsgs.map(m=>`<div class="sub" style="margin-top:4px">・${esc(m)}</div>`).join('')}<button class="btn sm ghost" style="margin-top:8px" data-act="inboxOk">知道了</button></div>`:''}
  ${needBackup()?`<div class="banner warnb"><b>該備份了。</b>${backupWhy()}<br><button class="btn sm" style="margin-top:8px" data-act="exportFile">匯出備份檔</button></div>`:''}
  ${!ps.length?'':checkedIn()?`<div class="done">✓ 今天已打卡</div>`:`<div class="banner"><b>今天還沒打卡。</b>睡前花 10 秒，填今天整體痛幾分、作業做了沒。</div>`}
  <div class="card"><div class="lbl">今天整體幾分</div>
@@ -409,6 +411,23 @@ function vToday(){const ps=active(),r=S.daily[TK]||{scores:{},hep:{}},{lv}=lastV
   <p class="sub">打勾＝已經問過，不會出現在下次摘要。</p></div>
  </section>`}
 
+function applyInbox(items){S.meta.inboxDone=S.meta.inboxDone||[];const msgs=[];
+ items.forEach(it=>{if(!it||!it.id||S.meta.inboxDone.includes(it.id))return;let m;
+  if(it.type==='hep_add'){let v=lastVisits().lv;if(!v){v={id:'v'+Date.now(),date:it.date||TK,notes:it.notes||'',hep:[]};S.visits.push(v)}
+   const have=new Set(v.hep.map(h=>h.name)),add=(it.exercises||[]).filter(e=>e&&e.name&&!have.has(e.name)).map((e,i)=>({id:'h'+Date.now()+'_'+i,name:e.name,dose:e.dose||'',how:e.how||''}));
+   v.hep.push(...add);m=add.length?`新增 ${add.length} 個居家作業：${add.map(h=>h.name).join('、')}`:''}
+  else if(it.type==='question_add'){const q=(it.questions||[]).filter(t=>t&&!S.questions.some(x=>x.text===t));q.forEach((t,i)=>S.questions.push({id:'q'+Date.now()+'_'+i,text:t,asked:false}));m=q.length?`新增 ${q.length} 個待問問題`:''}
+  else if(it.type==='visit_add'){if(it.date&&!S.visits.some(v=>v.date===it.date)){S.visits.push({id:'v'+Date.now(),date:it.date,notes:it.notes||'',hep:(it.exercises||[]).map((e,i)=>({id:'h'+Date.now()+'_'+i,name:e.name,dose:e.dose||'',how:e.how||''}))});m=`新增 ${md(it.date)} 回診紀錄`}else m=''}
+  else return;
+  S.meta.inboxDone.push(it.id);if(m)msgs.push(m)});
+ return msgs}
+let lastRemote=0;
+async function checkRemote(){if(Date.now()-lastRemote<60e3)return;lastRemote=Date.now();
+ try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(r.ok){const j=await r.json();
+  if(j.v&&j.v!==APP_VER){const k='rehab-reload-'+j.v;let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
+   if(!done){try{sessionStorage.setItem(k,'1')}catch(e){}persist();location.replace(location.pathname+'?v='+encodeURIComponent(j.v));return}}}}catch(e){}
+ try{const r=await fetch('inbox.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();const msgs=applyInbox(j.items||[]);
+  if(msgs.length){S.inboxMsgs=(S.inboxMsgs||[]).concat(msgs);render();toast('收到更新：'+msgs[0])}else persist()}catch(e){}}
 function needBackup(){if(!S.events.length&&!S.problems.length)return false;const l=S.meta.lastBackup;if(!l)return true;
  const lk=dkey(new Date(l));if(diffDays(TK,lk)>=7)return true;return (TODAY.getDay()===0||S.visits.some(v=>v.date===TK))&&lk!==TK}
 function backupWhy(){const l=S.meta.lastBackup;if(!l)return '還沒有備份過。手機資料一旦被清除就救不回來，建議現在匯出一份。';
@@ -509,6 +528,7 @@ function vProb(){const act=S.problems.filter(p=>p.status==='active'),fin=S.probl
   ${S.copyOut!=null?`<p class="sub">無法自動複製。請全選下方文字後手動複製：</p><textarea class="inp" readonly style="margin-top:6px;font-size:12px">${esc(S.copyOut)}</textarea>`:''}
   ${impPanel()}
   <input type="file" id="impFile" accept="application/json,.json,text/plain" hidden>
+  <p class="sub">App 版本 ${APP_VER}・打開時會自動檢查新版與更新內容。</p>
   <p class="sub">備份提醒：每週日、回診日，或超過 7 天沒備份時，「今天」分頁會提醒你。</p></div>
  <div class="card"><details><summary>設定每日打卡提醒</summary>
   <ol class="howto"><li>打開 iPhone 內建的「提醒事項」</li><li>新增提醒「my-rehab 打卡」</li><li>點 ⓘ → 開啟「日期」和「時間」，時間設 21:30</li><li>「重複」選「每天」</li></ol>
@@ -639,6 +659,7 @@ const H={
  qToggle:v=>{const q=S.questions.find(x=>x.id===v);q.asked=!q.asked},
  qAdd:()=>{const t=val('newQ');if(!t)return;S.questions.push({id:'q'+Date.now(),text:t,asked:false});toast('會出現在下次摘要')},
  sumPid:v=>{S.sumPid=v},
+ inboxOk:()=>{S.inboxMsgs=null},
  saveImg:()=>{makeImage();return 'stop'},
  imgShare:()=>{shareImg();return 'stop'},
  exportFile:()=>{exportFile();return 'stop'},
@@ -683,7 +704,9 @@ document.addEventListener('change',e=>{if(e.target.id!=='impFile'||!e.target.fil
 document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const m={newTrig:'addTrig',newQ:'qAdd',sTrig:'sTrigAdd',hDose:'hepAdd',hName:'hepAdd'}[e.target.id];if(m){e.preventDefault();H[m]();render()}});
 document.getElementById('today').textContent=`${TODAY.getMonth()+1}/${TODAY.getDate()} 週${WD[TODAY.getDay()]}`;
 render();
+checkRemote();
 document.addEventListener('visibilitychange',()=>{if(document.hidden)return;if(dkey(new Date())!==TK){persist();location.reload();return}
+ checkRemote();
  if(S.draft.score==null&&!S.draft.area.length){S.draft.time=nowLocal();if(S.tab==='log')render()}});
 </script>
 </body>
