@@ -266,30 +266,32 @@ small.how{display:block;white-space:pre-line;color:var(--muted);font-size:12px;l
 .caponly{display:none}
 #capHost{position:fixed;left:-10000px;top:0;pointer-events:none}
 .capc{--bg:#ffffff;--surface:#ffffff;--raise:#eef1f3;--line:#d4dbdf;--fg:#152027;--muted:#5a6771;--accent:#1d7a71;--gap:#ffffff;--seam-base:#000000;--muscle:var(--mus-l,#c3c7cb);--bad:#c9473c;--good:#2f8a55;
- width:360px;background:#fff;color:var(--fg);font-family:var(--f-body);padding:18px 18px 14px;box-sizing:border-box;display:grid;gap:12px}
+ width:360px;background:#fff;color:var(--fg);font-family:var(--f-body);padding:18px;box-sizing:border-box;display:grid;gap:14px}
 .cc-hd{border-bottom:2px solid var(--fg);padding-bottom:8px}
-.cc-t{font-size:19px;font-weight:700;display:flex;align-items:center}
+.cc-t{font-size:20px;font-weight:700;display:flex;align-items:center}
 .cc-d{font-family:var(--f-num);font-size:14px;color:var(--muted);margin-top:2px}
-.cc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.cc-stats>div{background:var(--raise);border-radius:10px;padding:8px 10px;display:grid}
-.cc-stats small{font-size:11px;color:var(--muted)}
-.cc-stats b{font-family:var(--f-num);font-size:26px;line-height:1.1}
-.cc-stats em{font-style:normal;font-size:12px;color:var(--muted);margin-left:2px}
-.cc-stats i,.cc-row i{font-style:normal;font-size:12px;font-family:var(--f-num);color:var(--muted)}
-.cc-stats i.dn{color:var(--good)}.cc-stats i.up{color:var(--bad)}
-.cc-note{font-size:10.5px;color:var(--muted);margin-top:-6px}
-.cc-body{display:grid}
-.cc-map{display:flex;justify-content:center;gap:18px;background:var(--raise);border-radius:12px;padding:10px 0 6px}
-.cc-map figure{margin:0;display:grid;justify-items:center;gap:2px}
-.cc-map svg{width:108px;height:auto}
-.cc-map figcaption{font-size:11px;color:var(--muted)}
-.cc-rows{display:grid;gap:6px;font-size:13px;line-height:1.45;min-width:0}
-.cc-row{display:grid;grid-template-columns:2.6em 1fr;gap:8px}
-.cc-row b{color:var(--muted);font-weight:500}
-.cc-row i.nw{color:var(--bad);font-weight:700;margin-left:2px}
-.cc-chart .chart{max-height:120px}
-.cc-q{font-size:13px;line-height:1.5;background:var(--raise);border-radius:10px;padding:8px 10px}
-.cc-q b{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-bottom:2px}
+.cc-tr{display:flex;align-items:center;gap:14px;border-radius:12px;padding:10px 14px;background:var(--raise)}
+.cc-tr b{font-size:26px;font-weight:700}
+.cc-tr span{font-family:var(--f-num);font-size:15px;line-height:1.35}
+.cc-tr small{font-family:var(--f-body);font-size:11px;color:var(--muted)}
+.cc-tr.good{background:#e3f3e8}.cc-tr.good b{color:var(--good)}
+.cc-tr.bad{background:#fbe6e3}.cc-tr.bad b{color:var(--bad)}
+.cc-tr.na b{font-size:18px;color:var(--muted)}
+.cc-sec h4{margin:0 0 6px;font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.04em;display:flex;justify-content:space-between;gap:8px}
+.cc-sec h4 em{font-style:normal;letter-spacing:0;font-family:var(--f-num)}
+.cc-loc{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center}
+.cc-map{display:flex;gap:4px}
+.cc-map svg{width:64px;height:auto}
+.cc-locs{font-size:15px;font-weight:500;line-height:1.5}
+.cc-lv{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cc-lv>div{background:var(--raise);border-radius:10px;padding:6px 10px;display:flex;align-items:baseline;gap:8px}
+.cc-lv span{font-size:12px;color:var(--muted)}
+.cc-lv b{font-family:var(--f-num);font-size:24px}
+.cc-lv b small{font-family:var(--f-body);font-size:13px;font-weight:500;margin-left:4px}
+.cc-days{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:2px}
+.cc-days i{display:grid;place-items:center;aspect-ratio:1;max-height:22px;border-radius:3px;background:var(--raise);font-style:normal;font-size:9px;font-family:var(--f-num);color:#0d1316}
+.cc-dl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);font-family:var(--f-num);margin-top:3px}
+.cc-tx{font-size:15px;line-height:1.5}
 .cc-ft{font-size:10.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:6px}
 .capturing .nocap{display:none!important}
 .capturing .caponly{display:inline}
@@ -361,7 +363,7 @@ const RELIEFS=['休息','熱敷','冰敷','伸展','換姿勢','藥物','貼紮'
 const DURS=['數秒','數分鐘','數小時','整天'];
 const EFF=['沒用','有點用','明顯緩解'];
 const DEF_TRIG=['久坐','走路','上下樓梯','彎腰','起床','運動中','提重物'];
-const APP_VER='2026-11-02-5';
+const APP_VER='2026-11-02-6';
 const STORE='myrehab_v1',DKEYS=['problems','visits','questions','events','daily','meta'];
 const S={tab:'log',sumPid:null,sheet:null,delArm:null,imp:null,copyOut:null,problems:[],visits:[],questions:[],events:[],daily:{},meta:{lastBackup:null}};
 let eid=Date.now();
@@ -695,31 +697,36 @@ function validBackup(t){let d;try{d=JSON.parse(String(t).trim())}catch(e){return
 let h2iP=null;function loadH2I(){return h2iP||(h2iP=new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='html-to-image.js';sc.onload=()=>ok(window.htmlToImage);sc.onerror=()=>{h2iP=null;no(new Error('load'))};document.head.appendChild(sc)}))}
 function compactCard(pid){const p=prob(pid);if(!p)return '';const{lv,pv}=lastVisits();
  const firstK=S.events.filter(e=>e.pid===pid).map(e=>dkey(new Date(e.ts))).sort()[0];
- const base=lv||{date:firstK&&firstK<p.since?firstK:p.since,hep:[],pseudo:true};
- const cur=periodStats(pid,base.date,dkey(dayOff(1))),prev=lv&&pv?periodStats(pid,pv.date,lv.date):null,days=Math.max(0,diffDays(TK,base.date));
+ const base=lv||{date:firstK&&firstK<p.since?firstK:p.since,pseudo:true};
+ const cur=periodStats(pid,base.date,dkey(dayOff(1))),days=Math.max(0,diffDays(TK,base.date));
+ // 有無改善
+ let ref=null,how='';
+ if(lv&&pv){const pr=periodStats(pid,pv.date,lv.date);if(pr.avg!=null){ref=pr.avg;how='與前一次回診區間比較'}}
+ if(ref==null){const mid=dkey(dayOff(-Math.floor(days/2))),a=periodStats(pid,base.date,mid),b=periodStats(pid,mid,dkey(dayOff(1)));
+  if(a.avg!=null&&b.avg!=null&&days>=4){ref=a.avg;how='前半段與後半段比較';cur._cmp=b.avg}}
+ const now=cur._cmp!=null?cur._cmp:cur.avg;
+ let tr=['資料不足','na'];if(ref!=null&&now!=null){const d=now-ref;tr=d<=-0.5?['改善','good']:d>=0.5?['變差','bad']:['持平','flat']}
+ // 發生日期：每天一格，顏色＝當天最高分
+ const N=Math.min(28,Math.max(7,days+1)),cells=[];let evDays=0;
+ for(let k=N-1;k>=0;k--){const dk=dkey(dayOff(-k));const es=S.events.filter(e=>e.pid===pid&&dkey(new Date(e.ts))===dk);
+  const mx=es.length?Math.max(...es.map(e=>e.score)):null;if(mx!=null)evDays++;
+  cells.push(`<i style="${mx!=null?`background:${painColor(mx)}`:''}" title="${md(dk)}">${mx!=null?mx:''}</i>`)}
+ const last=cur.evs.length?md(new Date(Math.max(...cur.evs.map(e=>e.ts)))):'';
  const cnt=f=>{const c={};cur.evs.forEach(e=>f(e).forEach(k=>c[k]=(c[k]||0)+1));return Object.entries(c).sort((a,b)=>b[1]-a[1])};
- const trig=cnt(e=>e.triggers).slice(0,3),qual=cnt(e=>e.quals),prevQ=new Set(prev?prev.evs.flatMap(e=>e.quals):qual.map(q=>q[0]));
- const rc={};cur.evs.forEach(e=>Object.entries(e.relief).forEach(([n,v])=>{if(v==null)return;rc[n]=rc[n]||[0,0];rc[n][0]+=v;rc[n][1]++}));
- const rel=Object.entries(rc).map(([n,[s,c]])=>[n,s/c]).sort((a,b)=>b[1]-a[1]),good=rel.filter(r=>r[1]>=.75).map(r=>r[0]+(r[1]>=1.5?'（明顯）':'')),bad=rel.filter(r=>r[1]<.75).map(r=>r[0]);
- const hepDays=[];for(let i=1;i<=days;i++){const k=dkey(dayOff(-days+i));if(k===TK&&!(S.daily[TK]&&Object.keys(S.daily[TK].hep).length))continue;hepDays.push(k)}
- const full=hepDays.filter(k=>S.daily[k]&&base.hep.length&&base.hep.every(h=>S.daily[k].hep[h.id])).length;
+ const trig=cnt(e=>e.triggers).slice(0,3);
  const areaCnt={};cur.evs.forEach(e=>(e.area||[]).forEach(i=>areaCnt[i]=(areaCnt[i]||0)+1));const amax=Math.max(1,...Object.values(areaCnt));
  const pins=cur.evs.flatMap(e=>e.pins||[]),views=['front','back'].filter(v=>Object.keys(areaCnt).some(i=>RM[i]&&RM[i].v===v)||pins.some(q=>q.v===v));
  const fill=id=>areaCnt[id]?[p.color,.7+.3*areaCnt[id]/amax]:null;
  const topArea=uniq(Object.entries(areaCnt).sort((a,b)=>b[1]-a[1]).map(([i])=>RL[i]).filter(Boolean)).slice(0,3);
- const dl=(c,pv,dec)=>c==null||pv==null?'':(()=>{const d=c-pv;if(Math.abs(d)<(dec?.05:.5))return '<i>持平</i>';return `<i class="${d<0?'dn':'up'}">${d<0?'↓':'↑'}${Math.abs(d).toFixed(dec)}</i>`})();
- const row=(k,v)=>v?`<div class="cc-row"><b>${k}</b><span>${v}</span></div>`:'';
- const openQ=S.questions.filter(q=>!q.asked);
+ const lvl=n=>n==null?'—':`${typeof n==='number'&&n%1?n.toFixed(1):n}<small>${PAIN_L(Math.round(n))}</small>`;
  return `<div class="capc" id="capCompact">
-  <div class="cc-hd"><div class="cc-t">${pdot(p.color)}${esc(p.name)}</div><div class="cc-d">${md(base.date)} ${base.pseudo?'開始記錄':'回診'} → ${md(TK)}・${days} 天</div></div>
-  <div class="cc-stats"><div><small>平均・${PAIN_L(cur.avg==null?null:Math.round(cur.avg))}</small><b>${cur.avg!=null?cur.avg.toFixed(1):'—'}</b>${dl(cur.avg,prev&&prev.avg,1)}</div><div><small>最高・${PAIN_L(cur.max)}</small><b>${cur.max??'—'}</b>${dl(cur.max,prev&&prev.max,0)}</div><div><small>發作</small><b>${cur.evs.length}<em>次</em></b>${dl(cur.evs.length,prev&&prev.evs.length,0)}</div></div>
-  ${prev?'<div class="cc-note">箭頭為與前一次回診區間比較</div>':''}
-  ${views.length?`<div class="cc-map">${views.map(v=>`<figure><svg viewBox="${vbStr(v)}">${figure(v,{fill,noSide:true})}${pinDots(v,pins,18,false)}</svg><figcaption>${v==='front'?'正面':'背面'}</figcaption></figure>`).join('')}</div>`:''}
-  <div class="cc-body"><div class="cc-rows">${row('部位',esc(topArea.join('、')||regionText(p)))}${row('誘發',esc(trig.map(([t,n])=>`${t} ${n}`).join('、')))}${row('有效',esc(good.join('、')))}${row('無效',esc(bad.join('、')))}
-    ${row('性質',qual.map(([q,n])=>esc(q)+' '+n+(prevQ.has(q)?'':'<i class="nw">新</i>')).join('、'))}${base.hep.length?row('作業',`${hepDays.length} 天中有 ${full} 天全部完成`):''}</div></div>
-  <div class="cc-chart">${chart(pid,base.date).replace(/<div class="legend">[\s\S]*$/,'')}</div>
-  ${openQ.length?`<div class="cc-q"><b>想問</b>${openQ.map((q,i)=>`<div>${i+1}. ${esc(q.text)}</div>`).join('')}</div>`:''}
-  <div class="cc-ft">分數 0–10（NRS）：1–3 輕微、4–6 中度、7–9 嚴重、10 最痛・黑線＝每日分數・圓點＝發作・白點＝最痛點・${md(TK)} 產生</div></div>`}
+  <div class="cc-hd"><div class="cc-t">${pdot(p.color)}${esc(p.name)}</div><div class="cc-d">${md(base.date)} → ${md(TK)}・${days} 天</div></div>
+  <div class="cc-tr ${tr[1]}"><b>${tr[0]}</b>${ref!=null&&now!=null?`<span>平均 ${ref.toFixed(1)} → ${now.toFixed(1)}<br><small>${how}</small></span>`:'<span><small>記錄再多幾天就能判斷</small></span>'}</div>
+  <div class="cc-sec"><h4>部位</h4><div class="cc-loc">${views.length?`<div class="cc-map">${views.map(v=>`<svg viewBox="${CROP[v]}">${figure(v,{fill,noSide:true})}${pinDots(v,pins,20,false)}</svg>`).join('')}</div>`:''}<div class="cc-locs">${esc(topArea.join('\n')||regionText(p)).replace(/\n/g,'<br>')}</div></div></div>
+  <div class="cc-sec"><h4>程度</h4><div class="cc-lv"><div><span>平均</span><b>${lvl(cur.avg)}</b></div><div><span>最高</span><b>${lvl(cur.max)}</b></div></div></div>
+  <div class="cc-sec"><h4>發生日期<em>共 ${cur.evs.length} 次・${evDays} 天${last?'・最近 '+last:''}</em></h4><div class="cc-days" style="--n:${N}">${cells.join('')}</div><div class="cc-dl"><span>${md(dayOff(-(N-1)))}</span><span>${md(TK)}</span></div></div>
+  <div class="cc-sec"><h4>誘發原因</h4><div class="cc-tx">${trig.length?esc(trig.map(([t,n])=>`${t}（${n} 次）`).join('、')):'沒有記錄'}</div></div>
+  <div class="cc-ft">分數 0–10：1–3 輕微・4–6 中度・7–9 嚴重・10 最痛</div></div>`}
 async function makeCompact(){const pid=S.sumPid&&prob(S.sumPid)&&prob(S.sumPid).status==='active'?S.sumPid:(active()[0]||{}).id;if(!pid)return;
  S.sheet={type:'img',mode:'compact'};render();
  try{const lib=await loadH2I();const host=document.getElementById('capHost');host.innerHTML=compactCard(pid);const node=document.getElementById('capCompact');
