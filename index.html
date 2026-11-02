@@ -458,7 +458,7 @@ function vLog(){const D=S.draft,eff=effPid(D),st=wSteps(D);if(!st.includes(D.ste
  return `<section class="stack wz">
   <div class="wzhead"><div class="wzbar"><i style="width:${(i+1)/st.length*100}%"></i></div>
    <div class="wztop"><h2 class="wztitle">${title}</h2>${D.score!=null&&D.step!=='note'?'<button class="lnk" data-act="goStep" data-v="note">完成 →</button>':''}</div></div>
-  ${['area','pin'].includes(D.step)?`<div class="wzplain">${body}</div>`:`<div class="card">${body}</div>`}</section>`}
+  ${['area','pin','score'].includes(D.step)?`<div class="wzplain">${body}</div>`:`<div class="card">${body}</div>`}</section>`}
 
 function vToday(){const ps=active(),r=S.daily[TK]||{scores:{},hep:{}},{lv}=lastVisits();
  const evs=S.events.filter(e=>dkey(new Date(e.ts))===TK).sort((a,b)=>b.ts-a.ts);
