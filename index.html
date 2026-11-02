@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>my-rehab</title>
 <meta name="description" content="物理治療症狀紀錄：記錄部位、疼痛分數、誘發情境與緩解方式，回診時一張摘要說清楚。">
-<meta name="theme-color" content="#f1f4f5" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#101418" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f1f4f5" id="themeMeta">
+<script>try{var t=localStorage.getItem("rehab-theme")||"light";if(t!=="system")document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="light"}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -348,7 +348,7 @@ const RELIEFS=['休息','熱敷','冰敷','伸展','換姿勢','藥物','貼紮'
 const DURS=['數秒','數分鐘','數小時','整天'];
 const EFF=['沒用','有點用','明顯緩解'];
 const DEF_TRIG=['久坐','走路','上下樓梯','彎腰','起床','運動中','提重物'];
-const APP_VER='2026-11-02-2';
+const APP_VER='2026-11-02-3';
 const STORE='myrehab_v1',DKEYS=['problems','visits','questions','events','daily','meta'];
 const S={tab:'log',sumPid:null,sheet:null,delArm:null,imp:null,copyOut:null,problems:[],visits:[],questions:[],events:[],daily:{},meta:{lastBackup:null}};
 let eid=Date.now();
@@ -570,6 +570,8 @@ function vProb(){const act=S.problems.filter(p=>p.status==='active'),fin=S.probl
  <div class="sec">回診紀錄</div>
  <div class="card">${vs.map(v=>`<div class="visit"><div class="dt">${md(v.date)} 週${WD[kd(v.date).getDay()]}</div><p>${esc(v.notes)}</p><small>居家作業 ${v.hep.length} 項${v.hep.length?'：'+esc(v.hep.map(h=>h.name).join('、')):''}</small><br><button class="evdel" style="margin-right:14px" data-act="editVisit" data-v="${v.id}">修改</button><button class="evdel ${S.delArm===v.id?'arm':''}" data-act="visitDel" data-v="${v.id}">${S.delArm===v.id?'確定刪除這次回診？':'刪除'}</button></div>`).join('')||'<div class="empty">還沒有回診紀錄。回診後新增一筆，摘要就會從那天開始算。</div>'}
   <button class="btn ghost" style="margin-top:8px" data-act="newVisit">＋ 新增回診</button></div>
+ <div class="sec">外觀</div>
+ <div class="card">${seg([['light','淺色'],['dark','深色'],['system','跟隨手機']],themeKey,'theme')}<p class="sub">預設淺色。選「跟隨手機」時，手機開深色模式就會變暗。</p></div>
  <div class="sec">身體圖肌肉顏色</div>
  <div class="card"><div class="swatches">${PAL.map(([k,n,l,d])=>`<button class="sw ${palKey===k?'on':''}" data-act="pal" data-v="${k}"><i style="background:${(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)&&document.documentElement.dataset.theme!=='light'||document.documentElement.dataset.theme==='dark'?d:l}"></i>${n}</button>`).join('')}</div></div>
  <div class="sec">資料與提醒</div>
@@ -659,6 +661,11 @@ const PAL=[['graphite','石墨灰','#c3c7cb','#555c62'],['mist','霧藍灰','#b7
 let palKey='graphite';try{palKey=localStorage.getItem('rehab-pal4')||palKey}catch(e){}
 function applyPal(){const p=PAL.find(x=>x[0]===palKey)||PAL[0],st=document.documentElement.style;st.setProperty('--mus-l',p[2]);st.setProperty('--mus-d',p[3])}
 applyPal();
+let themeKey='light';try{themeKey=localStorage.getItem('rehab-theme')||'light'}catch(e){}
+function applyTheme(){const r=document.documentElement;if(themeKey==='system')delete r.dataset.theme;else r.dataset.theme=themeKey;
+ const dark=themeKey==='dark'||(themeKey==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
+ const m=document.getElementById('themeMeta');if(m)m.setAttribute('content',dark?'#101418':'#f1f4f5')}
+applyTheme();
 function downloadBlob(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
 function backupJSON(){const o={app:'my-rehab',v:1,exportedAt:new Date().toISOString()};DKEYS.forEach(k=>o[k]=S[k]);return JSON.stringify(o)}
 const stamp=()=>{const d=new Date();return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`};
@@ -712,6 +719,7 @@ async function makeImage(){const el=document.getElementById('sumCap');if(!el)ret
 async function shareImg(){const u=S.sheet&&S.sheet.url;if(!u)return;try{const b=await (await fetch(u)).blob(),f=new File([b],`my-rehab-${S.sheet.mode==='compact'?'重點':'摘要'}-${stamp()}.png`,{type:'image/png'});
  if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:'my-rehab 摘要'});else downloadBlob(b,f.name)}catch(e){}}
 const H={
+ theme:v=>{themeKey=v;try{localStorage.setItem('rehab-theme',v)}catch(e){}applyTheme()},
  pal:v=>{palKey=v;try{localStorage.setItem('rehab-pal4',v)}catch(e){}applyPal()},
  tab:v=>{S.tab=v;S.delArm=null;S.copyOut=null;render();window.scrollTo(0,0)},
  stepNext:()=>{const D=S.draft;if(D.step==='score'&&D.score==null){toast('先選疼痛分數');return 'stop'}if(D.step==='assign'&&!effPid(D)){toast('先選一個問題');return 'stop'}stepMove(1)},
