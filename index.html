@@ -292,6 +292,15 @@ small.how{display:block;white-space:pre-line;color:var(--muted);font-size:12px;l
 .cc-days i{display:grid;place-items:center;aspect-ratio:1;max-height:22px;border-radius:3px;background:var(--raise);font-style:normal;font-size:9px;font-family:var(--f-num);color:#0d1316}
 .cc-dl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);font-family:var(--f-num);margin-top:3px}
 .cc-tx{font-size:15px;line-height:1.5}
+.cc-ev{display:grid;grid-template-columns:4.2em 3.6em 1fr;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.cc-ev:first-of-type{border-top:0}
+.cc-when{font-family:var(--f-num);font-size:15px;font-weight:600;line-height:1.15}
+.cc-when small{display:block;font-size:10.5px;font-weight:400;color:var(--muted)}
+.cc-sc{display:flex;align-items:baseline;gap:3px}
+.cc-sc b{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:6px;background:var(--c);color:#0d1316;font-family:var(--f-num);font-size:14px}
+.cc-sc small{font-size:11px;color:var(--muted)}
+.cc-what{display:grid;gap:1px;font-size:13.5px;line-height:1.35;min-width:0}
+.cc-what .tg{color:var(--muted);font-size:12.5px}
 .cc-ft{font-size:10.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:6px}
 .capturing .nocap{display:none!important}
 .capturing .caponly{display:inline}
@@ -363,7 +372,7 @@ const RELIEFS=['休息','熱敷','冰敷','伸展','換姿勢','藥物','貼紮'
 const DURS=['數秒','數分鐘','數小時','整天'];
 const EFF=['沒用','有點用','明顯緩解'];
 const DEF_TRIG=['久坐','走路','上下樓梯','彎腰','起床','運動中','提重物'];
-const APP_VER='2026-11-02-6';
+const APP_VER='2026-11-02-7';
 const STORE='myrehab_v1',DKEYS=['problems','visits','questions','events','daily','meta'];
 const S={tab:'log',sumPid:null,sheet:null,delArm:null,imp:null,copyOut:null,problems:[],visits:[],questions:[],events:[],daily:{},meta:{lastBackup:null}};
 let eid=Date.now();
@@ -713,7 +722,8 @@ function compactCard(pid){const p=prob(pid);if(!p)return '';const{lv,pv}=lastVis
   cells.push(`<i style="${mx!=null?`background:${painColor(mx)}`:''}" title="${md(dk)}">${mx!=null?mx:''}</i>`)}
  const last=cur.evs.length?md(new Date(Math.max(...cur.evs.map(e=>e.ts)))):'';
  const cnt=f=>{const c={};cur.evs.forEach(e=>f(e).forEach(k=>c[k]=(c[k]||0)+1));return Object.entries(c).sort((a,b)=>b[1]-a[1])};
- const trig=cnt(e=>e.triggers).slice(0,3);
+ const evList=[...cur.evs].sort((a,b)=>a.ts-b.ts).map(e=>{const d=new Date(e.ts),ar=uniq((e.area||[]).map(i=>RL[i]).filter(Boolean)).join('、'),tg=e.triggers.join('、');
+  return `<div class="cc-ev"><div class="cc-when">${md(d)}<small>週${WD[d.getDay()]} ${hm(e.ts)}</small></div><div class="cc-sc" style="--c:${painColor(e.score)}"><b>${e.score}</b><small>${PAIN_L(e.score)}</small></div><div class="cc-what">${ar?`<span>${esc(ar)}</span>`:''}${tg?`<span class="tg">${esc(tg)}</span>`:''}${!ar&&!tg?'<span class="tg">—</span>':''}</div></div>`}).join('');
  const areaCnt={};cur.evs.forEach(e=>(e.area||[]).forEach(i=>areaCnt[i]=(areaCnt[i]||0)+1));const amax=Math.max(1,...Object.values(areaCnt));
  const pins=cur.evs.flatMap(e=>e.pins||[]),views=['front','back'].filter(v=>Object.keys(areaCnt).some(i=>RM[i]&&RM[i].v===v)||pins.some(q=>q.v===v));
  const fill=id=>areaCnt[id]?[p.color,.7+.3*areaCnt[id]/amax]:null;
@@ -721,11 +731,9 @@ function compactCard(pid){const p=prob(pid);if(!p)return '';const{lv,pv}=lastVis
  const lvl=n=>n==null?'—':`${typeof n==='number'&&n%1?n.toFixed(1):n}<small>${PAIN_L(Math.round(n))}</small>`;
  return `<div class="capc" id="capCompact">
   <div class="cc-hd"><div class="cc-t">${pdot(p.color)}${esc(p.name)}</div><div class="cc-d">${md(base.date)} → ${md(TK)}・${days} 天</div></div>
-  <div class="cc-tr ${tr[1]}"><b>${tr[0]}</b>${ref!=null&&now!=null?`<span>平均 ${ref.toFixed(1)} → ${now.toFixed(1)}<br><small>${how}</small></span>`:'<span><small>記錄再多幾天就能判斷</small></span>'}</div>
   <div class="cc-sec"><h4>部位</h4><div class="cc-loc">${views.length?`<div class="cc-map">${views.map(v=>`<svg viewBox="${CROP[v]}">${figure(v,{fill,noSide:true})}${pinDots(v,pins,20,false)}</svg>`).join('')}</div>`:''}<div class="cc-locs">${esc(topArea.join('\n')||regionText(p)).replace(/\n/g,'<br>')}</div></div></div>
   <div class="cc-sec"><h4>程度</h4><div class="cc-lv"><div><span>平均</span><b>${lvl(cur.avg)}</b></div><div><span>最高</span><b>${lvl(cur.max)}</b></div></div></div>
-  <div class="cc-sec"><h4>發生日期<em>共 ${cur.evs.length} 次・${evDays} 天${last?'・最近 '+last:''}</em></h4><div class="cc-days" style="--n:${N}">${cells.join('')}</div><div class="cc-dl"><span>${md(dayOff(-(N-1)))}</span><span>${md(TK)}</span></div></div>
-  <div class="cc-sec"><h4>誘發原因</h4><div class="cc-tx">${trig.length?esc(trig.map(([t,n])=>`${t}（${n} 次）`).join('、')):'沒有記錄'}</div></div>
+  <div class="cc-sec"><h4>每次發生<em>共 ${cur.evs.length} 次</em></h4>${evList||'<div class="cc-tx">這段期間沒有記錄</div>'}</div>
   <div class="cc-ft">分數 0–10：1–3 輕微・4–6 中度・7–9 嚴重・10 最痛</div></div>`}
 async function makeCompact(){const pid=S.sumPid&&prob(S.sumPid)&&prob(S.sumPid).status==='active'?S.sumPid:(active()[0]||{}).id;if(!pid)return;
  S.sheet={type:'img',mode:'compact'};render();
