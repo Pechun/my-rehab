@@ -70,7 +70,7 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .chip.new{border-color:var(--bad)}
 .chip .tag{font-size:11px;font-weight:700;color:var(--bad);margin-left:6px}
 .addrow{display:flex;gap:8px;margin-top:10px}
-.inp{width:100%;min-width:0;background:var(--raise);border:1px solid var(--line);border-radius:10px;color:var(--fg);padding:10px 12px;font:inherit;font-size:15px}
+.inp{box-sizing:border-box;width:100%;min-width:0;background:var(--raise);border:1px solid var(--line);border-radius:10px;color:var(--fg);padding:10px 12px;font:inherit;font-size:15px}
 textarea.inp{min-height:76px;resize:vertical}
 .nrs{display:grid;grid-template-columns:repeat(11,1fr);gap:4px}
 .nrs button{height:46px;border-radius:8px;border:1px solid var(--line);background:var(--raise);font-family:var(--f-num);font-size:17px;font-weight:600;position:relative;padding:0}
@@ -93,6 +93,25 @@ textarea.inp{min-height:76px;resize:vertical}
 .savebar .in{max-width:488px;margin:0 auto;display:flex;align-items:center;gap:12px}
 .savebar .sum{flex:1;min-width:0;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .savebar .btn{width:auto;padding:13px 26px}
+.savebar .btn.ghost{background:var(--surface)}
+.savebar .in>.btn:last-child{margin-left:auto;min-width:9em}
+.wzhead{display:grid;gap:6px;padding-top:2px}
+.wzbar{height:4px;border-radius:2px;background:var(--raise);overflow:hidden}
+.wzbar i{display:block;height:100%;background:var(--accent);border-radius:2px;transition:width .25s}
+.wzmeta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);font-family:var(--f-num)}
+.wztitle{margin:4px 0 0;font-size:24px;line-height:1.3;text-wrap:balance}
+.wzctx{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--muted);margin-top:4px}
+.wzctx span{background:var(--raise);border-radius:999px;padding:2px 9px}
+.wzopts{display:grid;gap:10px}
+.wzopt{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;background:var(--raise);border:1px solid var(--line);border-radius:14px;padding:16px;font-size:17px;font-weight:500}
+.wzopt small{font-size:12px;color:var(--muted);font-weight:400;text-align:right;min-width:0}
+.wzopt.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;background:var(--accent-soft)}
+.wzchips .chip{padding:11px 16px;font-size:16px}
+.wzscore .nrs button{height:58px;font-size:20px}
+.rv{display:grid}
+.rvrow{display:grid;grid-template-columns:4em 1fr;gap:10px;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:11px 2px;font-size:15px}
+.rvrow b{color:var(--muted);font-weight:500}
+.rvrow i{color:var(--muted);font-style:normal;opacity:.7}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:7;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 .tabs-in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
 .tabs button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;color:var(--muted);font-size:11px;position:relative}
@@ -329,7 +348,7 @@ const RELIEFS=['休息','熱敷','冰敷','伸展','換姿勢','藥物','貼紮'
 const DURS=['數秒','數分鐘','數小時','整天'];
 const EFF=['沒用','有點用','明顯緩解'];
 const DEF_TRIG=['久坐','走路','上下樓梯','彎腰','起床','運動中','提重物'];
-const APP_VER='2026-11-02-1';
+const APP_VER='2026-11-02-2';
 const STORE='myrehab_v1',DKEYS=['problems','visits','questions','events','daily','meta'];
 const S={tab:'log',sumPid:null,sheet:null,delArm:null,imp:null,copyOut:null,problems:[],visits:[],questions:[],events:[],daily:{},meta:{lastBackup:null}};
 let eid=Date.now();
@@ -341,7 +360,7 @@ loadData();
 function visitAt(k){return [...S.visits].sort((a,b)=>a.date<b.date?-1:1).filter(v=>v.date<=k).pop()}
 const prob=id=>S.problems.find(p=>p.id===id);
 const active=()=>S.problems.filter(p=>p.status==='active');
-const newDraft=()=>({area:[],pins:[],pid:null,pidManual:false,choosing:false,newName:'',zoom:null,score:null,time:nowLocal(),quals:[],triggers:[],dur:null,relief:{},note:''});
+const newDraft=()=>({step:'area',area:[],pins:[],pid:null,pidManual:false,choosing:false,newName:'',zoom:null,score:null,time:nowLocal(),quals:[],triggers:[],dur:null,relief:{},note:''});
 S.draft=newDraft();
 try{const x=JSON.parse(localStorage.getItem(STORE+'_draft')||'null');if(x&&x.d&&Date.now()-x.at<6*3600e3){S.draft=Object.assign(newDraft(),x.d,{zoom:null,choosing:false})}}catch(e){}
 function effPid(D){if(D.pidManual)return D.pid;const ps=active();if(!D.area.length)return ps.length===1?ps[0].id:null;
@@ -366,60 +385,64 @@ function evRow(e,showProb,del){const p=prob(e.pid)||{name:'已刪除的問題',c
   <div>${esc(bits)||'—'}</div>${e.area&&e.area.length?`<div class="note">範圍：${esc(areaText(e.area))}${e.pins&&e.pins.length?' · 最痛點：'+esc(pinLabels(e.pins).join('、')):''}</div>`:''}${rel?`<div class="note">緩解：${esc(rel)}</div>`:''}${e.note?`<div class="note">${esc(e.note)}</div>`:''}${del?`<button class="evdel ${S.delArm===e.id?'arm':''}" data-act="evDel" data-v="${e.id}">${S.delArm===e.id?'確定刪除這筆？':'刪除'}</button>`:''}</div></div>`}
 
 /* ---------- views ---------- */
-function locBlock(D,eff){
- const curCol=eff&&eff!=='new'?prob(eff).color:'var(--accent)';
- if(D.zoom){const v=D.zoom,ms=D.area.map(i=>RM[i]).filter(m=>m.v===v),both=D.area.some(i=>RM[i].v==='front')&&D.area.some(i=>RM[i].v==='back');
-  let x0=Math.min(...ms.map(m=>m.minx)),x1=Math.max(...ms.map(m=>m.maxx)),y0=Math.min(...ms.map(m=>m.miny)),y1=Math.max(...ms.map(m=>m.maxy));
-  const cx=(x0+x1)/2,cy=(y0+y1)/2;let w=Math.max(x1-x0+70,220),h=y1-y0+70;if(h<w*1.1)h=w*1.1;if(w<h/1.6)w=h/1.6;
-  const vb=[cx-w/2,cy-h/2,w,h].map(n=>n.toFixed(1)).join(' '),r=(w*.028).toFixed(2);
-  const fill=id=>D.area.includes(id)?[curCol,.5]:null;
-  return `<div class="zoomwrap">
-   <div class="zoombar"><button class="btn sm ghost" data-act="zoomBack">← 重新選範圍</button>${both?seg([['front','正面'],['back','背面']],v,'zoomView'):`<span class="sub" style="margin:0">${v==='front'?'正面':'背面'}・已放大</span>`}</div>
-   <svg class="zoom" viewBox="${vb}" data-act="pin" data-v="${v}" aria-label="點選最痛的位置">${figure(v,{fill,noSide:true,tag:true})}${pinDots(v,D.pins,r,true)}</svg>
-   <div class="arealine"><span>${D.pins.length?'最痛點：<b>'+esc(pinLabels(D.pins).join('、'))+'</b>':'只能點在框選範圍內，可放多個；點標記取消'}</span>${D.pins.length?'<button data-act="clearPins">清除</button>':''}</div>
-   <button class="btn" data-act="zoomDone">完成</button></div>`}
+/* ---------- 記錄：一步一頁 ---------- */
+const STEP_T={area:['哪裡不舒服？','點肌肉塊圈出範圍，可複選，再點一次取消'],pin:['最痛的是哪一點？','只能點在剛剛圈的範圍內，可放多個；點標記取消'],
+ assign:['這是哪個問題？','選一個進行中的問題，或建立新問題'],score:['現在痛幾分？','0 不痛 · 5 中等 · 10 無法忍受（NRS）'],time:['什麼時候發生的？','預設是現在'],
+ qual:['是什麼樣的感覺？','可複選，沒有就略過'],trig:['當時在做什麼？','可複選，常用的排前面'],dur:['持續多久？','沒注意就略過'],
+ relief:['做了什麼來緩解？','選了之後再標效果'],note:['最後確認','點任一項可以回去修改']};
+function candidates(D){return active().map(p=>{const all=new Set([...p.regions,...p.extend]);return[p,D.area.filter(i=>all.has(i)).length]}).filter(x=>x[1]>0)}
+function needAssign(D){const e=effPid(D);return D.pidManual||!e||e==='new'||candidates(D).length>1}
+function wSteps(D){return ['area',...(D.area.length?['pin']:[]),...(needAssign(D)?['assign']:[]),'score','time','qual','trig','dur','relief','note']}
+function defZoom(D){const f=D.area.filter(i=>RM[i]&&RM[i].v==='front').length,b=D.area.length-f;return f>=b?'front':'back'}
+function goStep(id){const D=S.draft;if(id==='pin'&&(!D.zoom||!D.area.some(i=>RM[i].v===D.zoom)))D.zoom=defZoom(D);D.step=id;D.choosing=false;window.scrollTo(0,0)}
+function stepMove(d){const D=S.draft,st=wSteps(D);let i=st.indexOf(D.step);if(i<0)i=0;const n=st[Math.max(0,Math.min(st.length-1,i+d))];goStep(n)}
+function mapBlock(D,eff){const curCol=eff&&eff!=='new'?prob(eff).color:'var(--accent)';
  const fill=id=>{if(D.area.includes(id))return[curCol,.95];for(const p of active())if(p.regions.includes(id)||p.extend.includes(id))return[p.color,0,'hint'];return null};
- return `<div class="pins">${['front','back'].map(v=>`<div class="pinfig"><svg class="pinmap step1" viewBox="${vbStr(v)}">${figure(v,{fill,pick:'area'})}${pinDots(v,D.pins,16,false)}</svg><div class="cap">${v==='front'?'正面':'背面'}</div></div>`).join('')}</div>
+ return `<div class="pins wzmap">${['front','back'].map(v=>`<div class="pinfig"><svg class="pinmap step1" viewBox="${vbStr(v)}">${figure(v,{fill,pick:'area'})}${pinDots(v,D.pins,16,false)}</svg><div class="cap">${v==='front'?'正面':'背面'}</div></div>`).join('')}</div>
   <div class="plegend">${active().length?'<span>虛線框＝已有的問題：</span>':''}${active().map(p=>`<span>${pdot(p.color)}${esc(p.name)}</span>`).join('')}</div>
-  <div class="arealine"><span>${D.area.length?'範圍：<b>'+esc(areaText(D.area))+'</b>':'點肌肉塊圈出範圍，可複選，再點取消'}</span>${D.area.length?'<button data-act="clearArea">清除</button>':''}</div>
-  ${D.pins.length?`<div class="arealine"><span>最痛點：<b>${esc(pinLabels(D.pins).join('、'))}</b></span></div>`:''}
-  <button class="btn ghost ${D.area.length?'':'off'}" style="margin-top:10px" data-act="zoomOpen">${D.pins.length?'修改最痛點':'標最痛點（放大）'}</button>`}
-function assignBlock(D,eff){
- let head;
- if(!eff)head=`<button class="assign" data-act="assignOpen"><span class="who">歸到：尚未決定</span><small>圈範圍後自動判斷，或點此選擇</small></button>`;
- else if(eff==='new')head=`<div class="assign new"><div class="who">${pdot('var(--accent)')}新問題</div><button class="lnk" data-act="assignOpen">改歸既有問題</button></div>
-  <input class="inp" id="newName" data-field="newName" value="${esc(D.newName)}" placeholder="${esc(suggestName(D))}" style="margin-top:8px">
-  <p class="sub">範圍不屬於任何進行中的問題。儲存時會建立，名稱留空就用「${esc(suggestName(D))}」。</p>`;
- else{const p=prob(eff);head=`<button class="assign" data-act="assignOpen"><span class="who">${pdot(p.color)}歸到：${esc(p.name)}</span><small>${D.pidManual?'手動選擇':'自動判斷'}・更改</small></button>`}
- const pick=D.choosing?`<div class="chips" style="margin-top:10px">${active().map(p=>`<button class="chip ${D.pidManual&&D.pid===p.id?'on':''}" data-act="assignPick" data-v="${p.id}">${pdot(p.color)}${esc(p.name)}</button>`).join('')}<button class="chip ${D.pidManual&&D.pid==='new'?'on':''}" data-act="assignPick" data-v="new">＋ 新問題</button>${D.pidManual?'<button class="chip add" data-act="assignPick" data-v="auto">改回自動判斷</button>':''}</div>`:'';
- return head+pick}
-function vLog(){const D=S.draft,eff=effPid(D),p=eff&&eff!=='new'?prob(eff):null;
+  <div class="arealine"><span>${D.area.length?'範圍：<b>'+esc(areaText(D.area))+'</b>':'還沒選範圍'}</span>${D.area.length?'<button data-act="clearArea">清除</button>':''}</div>`}
+function zoomBlock(D,eff){const curCol=eff&&eff!=='new'?prob(eff).color:'var(--accent)';const v=D.zoom||defZoom(D),ms=D.area.map(i=>RM[i]).filter(m=>m.v===v),both=D.area.some(i=>RM[i].v==='front')&&D.area.some(i=>RM[i].v==='back');
+ let x0=Math.min(...ms.map(m=>m.minx)),x1=Math.max(...ms.map(m=>m.maxx)),y0=Math.min(...ms.map(m=>m.miny)),y1=Math.max(...ms.map(m=>m.maxy));
+ const cx=(x0+x1)/2,cy=(y0+y1)/2;let w=Math.max(x1-x0+70,220),h=y1-y0+70;if(h<w*1.1)h=w*1.1;if(w<h/1.6)w=h/1.6;
+ const vb=[cx-w/2,cy-h/2,w,h].map(n=>n.toFixed(1)).join(' '),r=(w*.028).toFixed(2),fill=id=>D.area.includes(id)?[curCol,.5]:null;
+ return `<div class="zoomwrap">${both?seg([['front','正面'],['back','背面']],v,'zoomView'):''}
+  <svg class="zoom" viewBox="${vb}" data-act="pin" data-v="${v}" aria-label="點選最痛的位置">${figure(v,{fill,noSide:true,tag:true})}${pinDots(v,D.pins,r,true)}</svg>
+  <div class="arealine"><span>${D.pins.length?'最痛點：<b>'+esc(pinLabels(D.pins).join('、'))+'</b>':'還沒標最痛點'}</span>${D.pins.length?'<button data-act="clearPins">清除</button>':''}</div></div>`}
+function assignStep(D,eff){const cand=new Map(candidates(D).map(([p,n])=>[p.id,n]));
+ const ps=[...active()].sort((a,b)=>(cand.get(b.id)||0)-(cand.get(a.id)||0));
+ return `<div class="wzopts">${ps.map(p=>`<button class="wzopt ${eff===p.id?'on':''}" data-act="assignPick" data-v="${p.id}"><span>${pdot(p.color)}${esc(p.name)}</span><small>${cand.get(p.id)?'部位相符':esc(regionText(p))}</small></button>`).join('')}
+  <button class="wzopt ${eff==='new'?'on':''}" data-act="assignPick" data-v="new"><span>＋ 新問題</span><small>${D.area.length?esc(areaText(D.area)):'先回第一步圈範圍會比較準'}</small></button></div>
+  ${eff==='new'?`<div class="lbl mt">新問題名稱</div><input class="inp" id="newName" data-field="newName" value="${esc(D.newName)}" placeholder="${esc(suggestName(D)||'例如：右膝外側痛')}"><p class="sub">留空就用「${esc(suggestName(D)||'未命名問題')}」。</p>`:''}`}
+function reviewStep(D,eff){const nm=eff==='new'?'新問題：'+(D.newName.trim()||suggestName(D)||'未命名'):eff?prob(eff).name:'尚未選';
+ const rel=Object.entries(D.relief).map(([n,v])=>n+(v!=null?'（'+EFF[v]+'）':'')).join('、');
+ const row=(st,k,v)=>`<button class="rvrow" data-act="goStep" data-v="${st}"><b>${k}</b><span>${v?esc(v):'<i>略過</i>'}</span></button>`;
+ const t=new Date(D.time);
+ return `<div class="rv">${row('area','部位',areaText(D.area))}${D.area.length?row('pin','最痛點',pinLabels(D.pins).join('、')):''}${row(needAssign(D)?'assign':'area','問題',nm)}
+  ${row('score','分數',D.score==null?'':D.score+' 分')}${row('time','時間',isNaN(t)?'':`${md(t)} ${pad(t.getHours())}:${pad(t.getMinutes())}`)}
+  ${row('qual','感覺',D.quals.join('、'))}${row('trig','情境',D.triggers.join('、'))}${row('dur','持續',D.dur||'')}${row('relief','緩解',rel)}</div>
+  <div class="lbl mt">備註</div><textarea class="inp" id="evNote" data-field="note" placeholder="例如：坐了兩小時才起身">${esc(D.note)}</textarea>`}
+function vLog(){const D=S.draft,eff=effPid(D),st=wSteps(D);if(!st.includes(D.step))D.step=st[Math.min(st.length-1,Math.max(0,st.indexOf(D.step)))]||'area';
+ const i=st.indexOf(D.step),[title,hint]=STEP_T[D.step],p=eff&&eff!=='new'?prob(eff):null;
  const cnt={};if(p)S.events.filter(e=>e.pid===p.id).forEach(e=>e.triggers.forEach(t=>cnt[t]=(cnt[t]||0)+1));
  const trig=uniq([...(p?p.triggers:DEF_TRIG),...D.triggers]).sort((a,b)=>(cnt[b]||0)-(cnt[a]||0));
- const rel=Object.keys(D.relief);
- return `<section class="stack">
- <div class="card">
-  <div class="lbl">哪裡不舒服<span class="hint">${D.zoom?'第二步：標最痛點':'第一步：圈範圍'}</span></div>
-  ${locBlock(D,eff)}
-  ${D.zoom?'':assignBlock(D,eff)}
-  <div class="lbl mt">疼痛分數<span class="hint">NRS 0–10</span></div>
-  ${nrs(D.score,'score')}
-  <div class="nrs-cap"><span>0 不痛</span><span>5 中等</span><span>10 無法忍受</span></div>
-  <div class="lbl mt">時間</div>
-  <input class="inp" type="datetime-local" id="evTime" data-field="time" value="${D.time}">
- </div>
- <h3 class="divider">補充細節<span>選填，越完整摘要越準</span></h3>
- <div class="card"><div class="lbl">疼痛性質<span class="hint">可複選</span></div>
-  <div class="chips">${QUALS.map(q=>chip(q,D.quals.includes(q),'qual',q)).join('')}</div></div>
- <div class="card"><div class="lbl">當時在做什麼<span class="hint">常用的排前面</span></div>
-  <div class="chips">${trig.map(t=>chip(t,D.triggers.includes(t),'trig',t)).join('')}</div>
-  <div class="addrow"><input class="inp" id="newTrig" placeholder="新增情境，例如：開車" autocomplete="off"><button class="btn sm ghost" data-act="addTrig">加入</button></div></div>
- <div class="card"><div class="lbl">持續多久</div>${seg(DURS,D.dur,'dur')}</div>
- <div class="card"><div class="lbl">做了什麼緩解<span class="hint">選了再標效果</span></div>
-  <div class="chips">${RELIEFS.map(r=>chip(r,r in D.relief,'relief',r)).join('')}</div>
-  ${rel.map(r=>`<div class="rel"><b>${esc(r)}</b>${seg(EFF.map((l,i)=>[r+'|'+i,l]),D.relief[r]==null?null:r+'|'+D.relief[r],'eff')}</div>`).join('')}</div>
- <div class="card"><div class="lbl">備註</div><textarea class="inp" id="evNote" data-field="note" placeholder="例如：坐了兩小時才起身">${esc(D.note)}</textarea></div>
- </section>`}
+ let body='';
+ switch(D.step){
+  case'area':body=mapBlock(D,eff);break;
+  case'pin':body=zoomBlock(D,eff);break;
+  case'assign':body=assignStep(D,eff);break;
+  case'score':body=`<div class="wzscore">${nrs(D.score,'score')}</div><div class="nrs-cap"><span>0 不痛</span><span>5 中等</span><span>10 無法忍受</span></div>`;break;
+  case'time':body=`<div class="wzopts"><button class="wzopt" data-act="timeNow"><span>剛剛 / 現在</span><small>${hm(Date.now())}</small></button></div><div class="lbl mt">或選擇時間</div><input class="inp" type="datetime-local" id="evTime" data-field="time" value="${D.time}">`;break;
+  case'qual':body=`<div class="chips wzchips">${QUALS.map(q=>chip(q,D.quals.includes(q),'qual',q)).join('')}</div>`;break;
+  case'trig':body=`<div class="chips wzchips">${trig.map(t=>chip(t,D.triggers.includes(t),'trig',t)).join('')}</div><div class="addrow"><input class="inp" id="newTrig" placeholder="新增情境，例如：開車" autocomplete="off"><button class="btn sm ghost" data-act="addTrig">加入</button></div>`;break;
+  case'dur':body=`<div class="wzopts">${DURS.map(d=>`<button class="wzopt ${D.dur===d?'on':''}" data-act="dur" data-v="${d}"><span>${d}</span></button>`).join('')}</div>`;break;
+  case'relief':{const rel=Object.keys(D.relief);body=`<div class="chips wzchips">${RELIEFS.map(r=>chip(r,r in D.relief,'relief',r)).join('')}</div>${rel.map(r=>`<div class="rel"><b>${esc(r)}</b>${seg(EFF.map((l,k)=>[r+'|'+k,l]),D.relief[r]==null?null:r+'|'+D.relief[r],'eff')}</div>`).join('')}`;break}
+  case'note':body=reviewStep(D,eff);break}
+ const ctx=i>0&&D.step!=='note'&&(eff||D.area.length)?`<div class="wzctx">${eff&&eff!=='new'?pdot(prob(eff).color)+esc(prob(eff).name):eff==='new'?'新問題':''}${D.area.length?`<span>${esc(areaText(D.area))}</span>`:''}${D.score!=null&&D.step!=='score'?`<span>${D.score} 分</span>`:''}</div>`:'';
+ return `<section class="stack wz">
+  <div class="wzhead"><div class="wzbar"><i style="width:${(i+1)/st.length*100}%"></i></div>
+   <div class="wzmeta"><span>第 ${i+1} / ${st.length} 步</span>${D.score!=null&&D.step!=='note'?'<button class="lnk" data-act="goStep" data-v="note">直接到最後確認 →</button>':''}</div>
+   <h2 class="wztitle">${title}</h2><p class="sub" style="margin:0">${hint}</p>${ctx}</div>
+  <div class="card">${body}</div></section>`}
 
 function vToday(){const ps=active(),r=S.daily[TK]||{scores:{},hep:{}},{lv}=lastVisits();
  const evs=S.events.filter(e=>dkey(new Date(e.ts))===TK).sort((a,b)=>b.ts-a.ts);
@@ -620,7 +643,11 @@ function render(){
  document.getElementById('main').innerHTML={log:vLog,today:vToday,sum:vSum,prob:vProb}[S.tab]();
  document.getElementById('tabs').innerHTML=TABS.map(([k,l,ic])=>`<button class="${S.tab===k?'on':''}" data-act="tab" data-v="${k}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ic}</svg>${l}${k==='today'&&!checkedIn()?'<span class="dot"></span>':''}</button>`).join('');
  const sb=document.getElementById('savebar');sb.hidden=S.tab!=='log';
- if(!sb.hidden){const D=S.draft,e=effPid(D),nm=e==='new'?'新問題':e?prob(e).name:'未選問題';sb.innerHTML=`<div class="in"><span class="sum">${esc(nm)} · ${D.score==null?'尚未選分數':D.score+' 分'}${D.triggers.length?' · '+esc(D.triggers.join('、')):''}</span><button class="btn ${D.score==null?'off':''}" data-act="save">儲存紀錄</button></div>`}
+ if(!sb.hidden){const D=S.draft,st=wSteps(D),k=st.indexOf(D.step),last=D.step==='note';
+  const opt={area:D.area.length,pin:D.pins.length,qual:D.quals.length,trig:D.triggers.length,dur:D.dur,relief:Object.keys(D.relief).length,time:1,assign:effPid(D),score:D.score!=null};
+  const lab=last?'儲存紀錄':(['score','assign'].includes(D.step)||opt[D.step])?'下一步':'略過';
+  const dis=(D.step==='score'&&D.score==null)||(D.step==='assign'&&!effPid(D));
+  sb.innerHTML=`<div class="in">${k>0?'<button class="btn ghost" data-act="stepPrev">上一步</button>':'<span class="sum">一步一頁，填完會自動跳下一題</span>'}<button class="btn ${dis?'off':''}" data-act="${last?'save':'stepNext'}">${lab}</button></div>`}
  document.getElementById('sheetRoot').innerHTML=vSheet();
  persist();
 }
@@ -687,6 +714,10 @@ async function shareImg(){const u=S.sheet&&S.sheet.url;if(!u)return;try{const b=
 const H={
  pal:v=>{palKey=v;try{localStorage.setItem('rehab-pal4',v)}catch(e){}applyPal()},
  tab:v=>{S.tab=v;S.delArm=null;S.copyOut=null;render();window.scrollTo(0,0)},
+ stepNext:()=>{const D=S.draft;if(D.step==='score'&&D.score==null){toast('先選疼痛分數');return 'stop'}if(D.step==='assign'&&!effPid(D)){toast('先選一個問題');return 'stop'}stepMove(1)},
+ stepPrev:()=>stepMove(-1),
+ goStep:v=>goStep(v),
+ timeNow:()=>{S.draft.time=nowLocal();stepMove(1)},
  area:v=>{const D=S.draft;tog(D.area,v);D.pins=D.pins.filter(q=>D.area.includes(q.r))},
  clearArea:()=>{S.draft.area=[];S.draft.pins=[]},
  zoomOpen:()=>{const D=S.draft;if(!D.area.length){toast('先點選肌肉塊圈出範圍');return 'stop'}
@@ -694,8 +725,8 @@ const H={
  zoomView:v=>{S.draft.zoom=v},
  zoomDone:()=>{S.draft.zoom=null},
  assignOpen:()=>{S.draft.choosing=!S.draft.choosing},
- assignPick:v=>{const D=S.draft;if(v==='auto')D.pidManual=false;else{D.pidManual=true;D.pid=v}D.choosing=false},
- score:v=>{S.draft.score=+v},
+ assignPick:v=>{const D=S.draft;if(v==='auto')D.pidManual=false;else{D.pidManual=true;D.pid=v}D.choosing=false;if(v!=='new'&&D.step==='assign')stepMove(1)},
+ score:v=>{S.draft.score=+v;if(S.draft.step==='score')setTimeout(()=>{if(S.draft.step==='score'){stepMove(1);render()}},220)},
  zoomBack:()=>{S.draft.zoom=null},
  pin:(v,el,e)=>{const t=e.target.closest&&e.target.closest('[data-r]');if(!t||!S.draft.area.includes(t.dataset.r)){toast('請點在框選的範圍內');return 'stop'}
   const m=el.getScreenCTM();if(!m)return 'stop';const pt=el.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(m.inverse());
@@ -705,12 +736,12 @@ const H={
  qual:v=>tog(S.draft.quals,v),
  trig:v=>tog(S.draft.triggers,v),
  addTrig:()=>{const t=val('newTrig');if(!t)return;const e=effPid(S.draft),p=e&&e!=='new'?prob(e):null;if(p&&!p.triggers.includes(t))p.triggers.unshift(t);if(!S.draft.triggers.includes(t))S.draft.triggers.push(t)},
- dur:v=>{S.draft.dur=S.draft.dur===v?null:v},
+ dur:v=>{const D=S.draft;D.dur=D.dur===v?null:v;if(D.dur&&D.step==='dur')stepMove(1)},
  relief:v=>{if(v in S.draft.relief)delete S.draft.relief[v];else S.draft.relief[v]=null},
  eff:v=>{const[n,i]=v.split('|');S.draft.relief[n]=+i},
- save:()=>{const D=S.draft;if(D.score==null){toast('先選疼痛分數');return 'stop'}
+ save:()=>{const D=S.draft;if(D.score==null){goStep('score');toast('先選疼痛分數');return}
   let pid=effPid(D),msg='';
-  if(!pid){toast('先圈出範圍，或點「歸到」選問題');return 'stop'}
+  if(!pid){goStep('assign');toast('先選這是哪個問題');return}
   if(pid==='new'){const name=D.newName.trim()||suggestName(D);if(!name){toast('新問題需要先圈範圍或取名稱');return 'stop'}
    const np={id:'p'+Date.now(),name,regions:[...D.area],extend:[],since:TK,status:'active',triggers:uniq([...DEF_TRIG,...D.triggers]),color:PCOL[S.problems.length%PCOL.length]};
    S.problems.push(np);pid=np.id;msg=`已建立新問題「${name}」並記錄`}
