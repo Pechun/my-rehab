@@ -95,7 +95,16 @@ textarea.inp{min-height:76px;resize:vertical}
 .savebar .btn{width:auto;padding:13px 26px}
 .savebar .btn.ghost{background:var(--surface)}
 .savebar .in>.btn:last-child{margin-left:auto;min-width:9em}
-.wzhead{display:grid;gap:6px;padding-top:2px}
+.wzhead{display:grid;gap:8px;padding-top:2px}
+.wztop{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.wzplain{display:grid;gap:10px}
+.flip{display:grid;grid-template-columns:1fr 1fr;background:var(--raise);border-radius:12px;padding:3px;gap:3px}
+.flip button{border:0;background:transparent;color:var(--muted);border-radius:9px;padding:9px 4px;font-size:15px;display:flex;justify-content:center;align-items:center;gap:6px}
+.flip button.on{background:var(--surface);color:var(--fg);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.flip i{font-style:normal;font-size:11px;background:var(--accent);color:var(--on-accent);border-radius:999px;min-width:18px;height:18px;display:inline-grid;place-items:center;padding:0 5px}
+.wzfigrow{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:2px}
+.wzfigrow .side{font-size:12px;color:var(--muted);width:1.2em;text-align:center}
+svg.wzfig{display:block;margin:0 auto;width:auto;max-width:100%;height:calc(100vh - 330px);height:calc(100dvh - 300px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:300px}
 .wzbar{height:4px;border-radius:2px;background:var(--raise);overflow:hidden}
 .wzbar i{display:block;height:100%;background:var(--accent);border-radius:2px;transition:width .25s}
 .wzmeta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);font-family:var(--f-num)}
@@ -226,7 +235,7 @@ path.mu[data-act]{cursor:pointer}
 .zoomwrap{display:grid;gap:10px}
 .zoombar{display:flex;align-items:center;gap:10px}
 .zoombar .seg{flex:1}
-svg.zoom{width:100%;height:auto;max-height:58vh;background:var(--bg);border-radius:12px;cursor:crosshair;touch-action:manipulation}
+svg.zoom{width:100%;height:auto;max-height:calc(100dvh - 330px);background:var(--bg);border-radius:12px;cursor:crosshair;touch-action:manipulation}
 .pn2{display:inline-flex;align-items:center}
 .pinfig .cap{font-size:12px;color:var(--muted)}
 .pinsel{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:13px}
@@ -348,7 +357,7 @@ const RELIEFS=['休息','熱敷','冰敷','伸展','換姿勢','藥物','貼紮'
 const DURS=['數秒','數分鐘','數小時','整天'];
 const EFF=['沒用','有點用','明顯緩解'];
 const DEF_TRIG=['久坐','走路','上下樓梯','彎腰','起床','運動中','提重物'];
-const APP_VER='2026-11-02-3';
+const APP_VER='2026-11-02-4';
 const STORE='myrehab_v1',DKEYS=['problems','visits','questions','events','daily','meta'];
 const S={tab:'log',sumPid:null,sheet:null,delArm:null,imp:null,copyOut:null,problems:[],visits:[],questions:[],events:[],daily:{},meta:{lastBackup:null}};
 let eid=Date.now();
@@ -360,7 +369,7 @@ loadData();
 function visitAt(k){return [...S.visits].sort((a,b)=>a.date<b.date?-1:1).filter(v=>v.date<=k).pop()}
 const prob=id=>S.problems.find(p=>p.id===id);
 const active=()=>S.problems.filter(p=>p.status==='active');
-const newDraft=()=>({step:'area',area:[],pins:[],pid:null,pidManual:false,choosing:false,newName:'',zoom:null,score:null,time:nowLocal(),quals:[],triggers:[],dur:null,relief:{},note:''});
+const newDraft=()=>({step:'area',mapView:'front',area:[],pins:[],pid:null,pidManual:false,choosing:false,newName:'',zoom:null,score:null,time:nowLocal(),quals:[],triggers:[],dur:null,relief:{},note:''});
 S.draft=newDraft();
 try{const x=JSON.parse(localStorage.getItem(STORE+'_draft')||'null');if(x&&x.d&&Date.now()-x.at<6*3600e3){S.draft=Object.assign(newDraft(),x.d,{zoom:null,choosing:false})}}catch(e){}
 function effPid(D){if(D.pidManual)return D.pid;const ps=active();if(!D.area.length)return ps.length===1?ps[0].id:null;
@@ -396,18 +405,20 @@ function wSteps(D){return ['area',...(D.area.length?['pin']:[]),...(needAssign(D
 function defZoom(D){const f=D.area.filter(i=>RM[i]&&RM[i].v==='front').length,b=D.area.length-f;return f>=b?'front':'back'}
 function goStep(id){const D=S.draft;if(id==='pin'&&(!D.zoom||!D.area.some(i=>RM[i].v===D.zoom)))D.zoom=defZoom(D);D.step=id;D.choosing=false;window.scrollTo(0,0)}
 function stepMove(d){const D=S.draft,st=wSteps(D);let i=st.indexOf(D.step);if(i<0)i=0;const n=st[Math.max(0,Math.min(st.length-1,i+d))];goStep(n)}
-function mapBlock(D,eff){const curCol=eff&&eff!=='new'?prob(eff).color:'var(--accent)';
- const fill=id=>{if(D.area.includes(id))return[curCol,.95];for(const p of active())if(p.regions.includes(id)||p.extend.includes(id))return[p.color,0,'hint'];return null};
- return `<div class="pins wzmap">${['front','back'].map(v=>`<div class="pinfig"><svg class="pinmap step1" viewBox="${vbStr(v)}">${figure(v,{fill,pick:'area'})}${pinDots(v,D.pins,16,false)}</svg><div class="cap">${v==='front'?'正面':'背面'}</div></div>`).join('')}</div>
-  <div class="plegend">${active().length?'<span>虛線框＝已有的問題：</span>':''}${active().map(p=>`<span>${pdot(p.color)}${esc(p.name)}</span>`).join('')}</div>
-  <div class="arealine"><span>${D.area.length?'範圍：<b>'+esc(areaText(D.area))+'</b>':'還沒選範圍'}</span>${D.area.length?'<button data-act="clearArea">清除</button>':''}</div>`}
+const CROP={front:'40 88 648 1272',back:'760 89 648 1271'};
+function mapBlock(D,eff){const curCol=eff&&eff!=='new'?prob(eff).color:'var(--accent)',v=D.mapView||'front';
+ const fill=id=>D.area.includes(id)?[curCol,.95]:null,n=w=>D.area.filter(i=>RM[i]&&RM[i].v===w).length;
+ const sides=v==='front'?['右','左']:['左','右'];
+ return `<div class="flip">${[['front','正面'],['back','背面']].map(([k,l])=>`<button class="${v===k?'on':''}" data-act="mapView" data-v="${k}">${l}${n(k)?`<i>${n(k)}</i>`:''}</button>`).join('')}</div>
+  <div class="wzfigrow"><span class="side">${sides[0]}</span><svg class="pinmap step1 wzfig" viewBox="${CROP[v]}">${figure(v,{fill,pick:'area',noSide:true})}${pinDots(v,D.pins,16,false)}</svg><span class="side">${sides[1]}</span></div>
+  ${D.area.length?`<div class="arealine"><span><b>${esc(areaText(D.area))}</b></span><button data-act="clearArea">清除</button></div>`:''}`}
 function zoomBlock(D,eff){const curCol=eff&&eff!=='new'?prob(eff).color:'var(--accent)';const v=D.zoom||defZoom(D),ms=D.area.map(i=>RM[i]).filter(m=>m.v===v),both=D.area.some(i=>RM[i].v==='front')&&D.area.some(i=>RM[i].v==='back');
  let x0=Math.min(...ms.map(m=>m.minx)),x1=Math.max(...ms.map(m=>m.maxx)),y0=Math.min(...ms.map(m=>m.miny)),y1=Math.max(...ms.map(m=>m.maxy));
  const cx=(x0+x1)/2,cy=(y0+y1)/2;let w=Math.max(x1-x0+70,220),h=y1-y0+70;if(h<w*1.1)h=w*1.1;if(w<h/1.6)w=h/1.6;
  const vb=[cx-w/2,cy-h/2,w,h].map(n=>n.toFixed(1)).join(' '),r=(w*.028).toFixed(2),fill=id=>D.area.includes(id)?[curCol,.5]:null;
  return `<div class="zoomwrap">${both?seg([['front','正面'],['back','背面']],v,'zoomView'):''}
   <svg class="zoom" viewBox="${vb}" data-act="pin" data-v="${v}" aria-label="點選最痛的位置">${figure(v,{fill,noSide:true,tag:true})}${pinDots(v,D.pins,r,true)}</svg>
-  <div class="arealine"><span>${D.pins.length?'最痛點：<b>'+esc(pinLabels(D.pins).join('、'))+'</b>':'還沒標最痛點'}</span>${D.pins.length?'<button data-act="clearPins">清除</button>':''}</div></div>`}
+  ${D.pins.length?`<div class="arealine"><span><b>${esc(pinLabels(D.pins).join('、'))}</b></span><button data-act="clearPins">清除</button></div>`:''}</div>`}
 function assignStep(D,eff){const cand=new Map(candidates(D).map(([p,n])=>[p.id,n]));
  const ps=[...active()].sort((a,b)=>(cand.get(b.id)||0)-(cand.get(a.id)||0));
  return `<div class="wzopts">${ps.map(p=>`<button class="wzopt ${eff===p.id?'on':''}" data-act="assignPick" data-v="${p.id}"><span>${pdot(p.color)}${esc(p.name)}</span><small>${cand.get(p.id)?'部位相符':esc(regionText(p))}</small></button>`).join('')}
@@ -440,9 +451,8 @@ function vLog(){const D=S.draft,eff=effPid(D),st=wSteps(D);if(!st.includes(D.ste
  const ctx=i>0&&D.step!=='note'&&(eff||D.area.length)?`<div class="wzctx">${eff&&eff!=='new'?pdot(prob(eff).color)+esc(prob(eff).name):eff==='new'?'新問題':''}${D.area.length?`<span>${esc(areaText(D.area))}</span>`:''}${D.score!=null&&D.step!=='score'?`<span>${D.score} 分</span>`:''}</div>`:'';
  return `<section class="stack wz">
   <div class="wzhead"><div class="wzbar"><i style="width:${(i+1)/st.length*100}%"></i></div>
-   <div class="wzmeta"><span>第 ${i+1} / ${st.length} 步</span>${D.score!=null&&D.step!=='note'?'<button class="lnk" data-act="goStep" data-v="note">直接到最後確認 →</button>':''}</div>
-   <h2 class="wztitle">${title}</h2><p class="sub" style="margin:0">${hint}</p>${ctx}</div>
-  <div class="card">${body}</div></section>`}
+   <div class="wztop"><h2 class="wztitle">${title}</h2>${D.score!=null&&D.step!=='note'?'<button class="lnk" data-act="goStep" data-v="note">完成 →</button>':''}</div></div>
+  ${['area','pin'].includes(D.step)?`<div class="wzplain">${body}</div>`:`<div class="card">${body}</div>`}</section>`}
 
 function vToday(){const ps=active(),r=S.daily[TK]||{scores:{},hep:{}},{lv}=lastVisits();
  const evs=S.events.filter(e=>dkey(new Date(e.ts))===TK).sort((a,b)=>b.ts-a.ts);
@@ -649,7 +659,7 @@ function render(){
   const opt={area:D.area.length,pin:D.pins.length,qual:D.quals.length,trig:D.triggers.length,dur:D.dur,relief:Object.keys(D.relief).length,time:1,assign:effPid(D),score:D.score!=null};
   const lab=last?'儲存紀錄':(['score','assign'].includes(D.step)||opt[D.step])?'下一步':'略過';
   const dis=(D.step==='score'&&D.score==null)||(D.step==='assign'&&!effPid(D));
-  sb.innerHTML=`<div class="in">${k>0?'<button class="btn ghost" data-act="stepPrev">上一步</button>':'<span class="sum">一步一頁，填完會自動跳下一題</span>'}<button class="btn ${dis?'off':''}" data-act="${last?'save':'stepNext'}">${lab}</button></div>`}
+  sb.innerHTML=`<div class="in">${k>0?'<button class="btn ghost" data-act="stepPrev">上一步</button>':''}<button class="btn ${dis?'off':''}" data-act="${last?'save':'stepNext'}">${lab}</button></div>`}
  document.getElementById('sheetRoot').innerHTML=vSheet();
  persist();
 }
@@ -725,6 +735,7 @@ const H={
  stepNext:()=>{const D=S.draft;if(D.step==='score'&&D.score==null){toast('先選疼痛分數');return 'stop'}if(D.step==='assign'&&!effPid(D)){toast('先選一個問題');return 'stop'}stepMove(1)},
  stepPrev:()=>stepMove(-1),
  goStep:v=>goStep(v),
+ mapView:v=>{S.draft.mapView=v},
  timeNow:()=>{S.draft.time=nowLocal();stepMove(1)},
  area:v=>{const D=S.draft;tog(D.area,v);D.pins=D.pins.filter(q=>D.area.includes(q.r))},
  clearArea:()=>{S.draft.area=[];S.draft.pins=[]},
