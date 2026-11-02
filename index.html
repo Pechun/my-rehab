@@ -176,6 +176,7 @@ details[open] summary::after{content:"收合"}
 path.body{fill:var(--muscle);stroke:none;pointer-events:none}
 path.mu{fill:var(--muscle);stroke:color-mix(in srgb,var(--muscle) 78%,var(--seam-base));stroke-width:1px;vector-effect:non-scaling-stroke;stroke-linejoin:round}
 path.fl{fill:none;stroke:var(--outline);stroke-opacity:.55;stroke-width:.9px;vector-effect:non-scaling-stroke;stroke-linecap:round;pointer-events:none}
+path.mu.hint{stroke:var(--hc);stroke-width:2px;stroke-dasharray:5 3;stroke-linejoin:round}
 path.mu.soft{stroke:var(--muscle);stroke-width:.6px}
 .swatches{display:flex;flex-wrap:wrap;gap:8px}
 .sw{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--raise);border-radius:999px;padding:6px 12px 6px 6px;font-size:14px}
@@ -315,7 +316,7 @@ const pinLabelPro=q=>RM[q.r]?proName(RM[q.r]):'';
 const pinLabels=pins=>uniq(pins.map(pinLabel));
 function figure(view,o){const B=BODY[view],[x0,,w,h]=B.vb;
  const ps=`<path class="body" d="${B.outline}" aria-hidden="true"/>`+MP[view].map(m=>{const f=o.fill&&o.fill(m.id);
-  return `<path class="mu" d="${m.d}"${f?` style="fill:color-mix(in srgb,${f[0]} ${Math.round(f[1]*100)}%,var(--gap))"`:''}${o.pick?` data-act="${o.pick}" data-v="${m.id}"`:''}${o.tag?` data-r="${m.id}"`:''}><title>${m.label}</title></path>`}).join('')
+  return `<path class="mu${f&&f[2]==='hint'?' hint':''}" d="${m.d}"${f?(f[2]==='hint'?` style="--hc:${f[0]}"`:` style="fill:color-mix(in srgb,${f[0]} ${Math.round(f[1]*100)}%,var(--gap))"`):''}${o.pick?` data-act="${o.pick}" data-v="${m.id}"`:''}${o.tag?` data-r="${m.id}"`:''}><title>${m.label}</title></path>`}).join('')
   +B.deco.map(d=>`<path class="hair" d="${d}"/>`).join('');
  const lt=view==='front'?['右','左']:['左','右'];
  return ps+(o.noSide?'':`<text x="${x0+24}" y="${h-24}">${lt[0]}</text><text x="${x0+w-24}" y="${h-24}" text-anchor="end">${lt[1]}</text>`)}
@@ -328,7 +329,7 @@ const RELIEFS=['休息','熱敷','冰敷','伸展','換姿勢','藥物','貼紮'
 const DURS=['數秒','數分鐘','數小時','整天'];
 const EFF=['沒用','有點用','明顯緩解'];
 const DEF_TRIG=['久坐','走路','上下樓梯','彎腰','起床','運動中','提重物'];
-const APP_VER='2026-10-27-3';
+const APP_VER='2026-11-02-1';
 const STORE='myrehab_v1',DKEYS=['problems','visits','questions','events','daily','meta'];
 const S={tab:'log',sumPid:null,sheet:null,delArm:null,imp:null,copyOut:null,problems:[],visits:[],questions:[],events:[],daily:{},meta:{lastBackup:null}};
 let eid=Date.now();
@@ -377,9 +378,9 @@ function locBlock(D,eff){
    <svg class="zoom" viewBox="${vb}" data-act="pin" data-v="${v}" aria-label="點選最痛的位置">${figure(v,{fill,noSide:true,tag:true})}${pinDots(v,D.pins,r,true)}</svg>
    <div class="arealine"><span>${D.pins.length?'最痛點：<b>'+esc(pinLabels(D.pins).join('、'))+'</b>':'只能點在框選範圍內，可放多個；點標記取消'}</span>${D.pins.length?'<button data-act="clearPins">清除</button>':''}</div>
    <button class="btn" data-act="zoomDone">完成</button></div>`}
- const fill=id=>{if(D.area.includes(id))return[curCol,.95];for(const p of active())if(p.regions.includes(id)||p.extend.includes(id))return[p.color,.45];return null};
+ const fill=id=>{if(D.area.includes(id))return[curCol,.95];for(const p of active())if(p.regions.includes(id)||p.extend.includes(id))return[p.color,0,'hint'];return null};
  return `<div class="pins">${['front','back'].map(v=>`<div class="pinfig"><svg class="pinmap step1" viewBox="${vbStr(v)}">${figure(v,{fill,pick:'area'})}${pinDots(v,D.pins,16,false)}</svg><div class="cap">${v==='front'?'正面':'背面'}</div></div>`).join('')}</div>
-  <div class="plegend">${active().map(p=>`<span>${pdot(p.color)}${esc(p.name)}</span>`).join('')}</div>
+  <div class="plegend">${active().length?'<span>虛線框＝已有的問題：</span>':''}${active().map(p=>`<span>${pdot(p.color)}${esc(p.name)}</span>`).join('')}</div>
   <div class="arealine"><span>${D.area.length?'範圍：<b>'+esc(areaText(D.area))+'</b>':'點肌肉塊圈出範圍，可複選，再點取消'}</span>${D.area.length?'<button data-act="clearArea">清除</button>':''}</div>
   ${D.pins.length?`<div class="arealine"><span>最痛點：<b>${esc(pinLabels(D.pins).join('、'))}</b></span></div>`:''}
   <button class="btn ghost ${D.area.length?'':'off'}" style="margin-top:10px" data-act="zoomOpen">${D.pins.length?'修改最痛點':'標最痛點（放大）'}</button>`}
