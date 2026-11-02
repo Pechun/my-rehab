@@ -116,7 +116,11 @@ svg.wzfig{display:block;margin:0 auto;width:auto;max-width:100%;height:calc(100v
 .wzopt small{font-size:12px;color:var(--muted);font-weight:400;text-align:right;min-width:0}
 .wzopt.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;background:var(--accent-soft)}
 .wzchips .chip{padding:11px 16px;font-size:16px}
-.wzscore .nrs button{height:58px;font-size:20px}
+.plist{display:grid;gap:4px}
+.prow2{display:grid;grid-template-columns:2.6em 1fr;align-items:center;gap:12px;width:100%;text-align:left;background:var(--raise);border:1px solid var(--line);border-radius:10px;padding:4px 10px 4px 4px;font-size:14px}
+.prow2 b{display:grid;place-items:center;height:28px;border-radius:7px;background:var(--c);color:var(--pain-ink);font-family:var(--f-num);font-size:18px}
+.prow2.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;background:var(--accent-soft);font-weight:700}
+.pdesc{font-size:12px;color:var(--muted);margin-top:6px;text-align:center}
 .rv{display:grid}
 .rvrow{display:grid;grid-template-columns:4em 1fr;gap:10px;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:11px 2px;font-size:15px}
 .rvrow b{color:var(--muted);font-weight:500}
@@ -357,7 +361,7 @@ const RELIEFS=['休息','熱敷','冰敷','伸展','換姿勢','藥物','貼紮'
 const DURS=['數秒','數分鐘','數小時','整天'];
 const EFF=['沒用','有點用','明顯緩解'];
 const DEF_TRIG=['久坐','走路','上下樓梯','彎腰','起床','運動中','提重物'];
-const APP_VER='2026-11-02-4';
+const APP_VER='2026-11-02-5';
 const STORE='myrehab_v1',DKEYS=['problems','visits','questions','events','daily','meta'];
 const S={tab:'log',sumPid:null,sheet:null,delArm:null,imp:null,copyOut:null,problems:[],visits:[],questions:[],events:[],daily:{},meta:{lastBackup:null}};
 let eid=Date.now();
@@ -395,6 +399,8 @@ function evRow(e,showProb,del){const p=prob(e.pid)||{name:'已刪除的問題',c
 
 /* ---------- views ---------- */
 /* ---------- 記錄：一步一頁 ---------- */
+const PAIN=['完全不痛','幾乎感覺不到','輕微，偶爾會注意到','輕微，不影響日常','有點痛，會分心','中度，影響部分活動','中度，很難忽略','嚴重，影響專心或睡眠','很嚴重，大部分活動受限','非常嚴重，幾乎無法活動','最痛，無法忍受'];
+const PAIN_L=n=>n==null?'':n<=0?'不痛':n<4?'輕微':n<7?'中度':n<10?'嚴重':'最痛';
 const STEP_T={area:['哪裡不舒服？','點肌肉塊圈出範圍，可複選，再點一次取消'],pin:['最痛的是哪一點？','只能點在剛剛圈的範圍內，可放多個；點標記取消'],
  assign:['這是哪個問題？','選一個進行中的問題，或建立新問題'],score:['現在痛幾分？','0 不痛 · 5 中等 · 10 無法忍受（NRS）'],time:['什麼時候發生的？','預設是現在'],
  qual:['是什麼樣的感覺？','可複選，沒有就略過'],trig:['當時在做什麼？','可複選，常用的排前面'],dur:['持續多久？','沒注意就略過'],
@@ -441,7 +447,7 @@ function vLog(){const D=S.draft,eff=effPid(D),st=wSteps(D);if(!st.includes(D.ste
   case'area':body=mapBlock(D,eff);break;
   case'pin':body=zoomBlock(D,eff);break;
   case'assign':body=assignStep(D,eff);break;
-  case'score':body=`<div class="wzscore">${nrs(D.score,'score')}</div><div class="nrs-cap"><span>0 不痛</span><span>5 中等</span><span>10 無法忍受</span></div>`;break;
+  case'score':body=`<div class="plist">${PAIN.map((t,n)=>`<button class="prow2 ${D.score===n?'on':''}" style="--c:${painColor(n)}" data-act="score" data-v="${n}"><b>${n}</b><span>${t}</span></button>`).join('')}</div>`;break;
   case'time':body=`<div class="wzopts"><button class="wzopt" data-act="timeNow"><span>剛剛 / 現在</span><small>${hm(Date.now())}</small></button></div><div class="lbl mt">或選擇時間</div><input class="inp" type="datetime-local" id="evTime" data-field="time" value="${D.time}">`;break;
   case'qual':body=`<div class="chips wzchips">${QUALS.map(q=>chip(q,D.quals.includes(q),'qual',q)).join('')}</div>`;break;
   case'trig':body=`<div class="chips wzchips">${trig.map(t=>chip(t,D.triggers.includes(t),'trig',t)).join('')}</div><div class="addrow"><input class="inp" id="newTrig" placeholder="新增情境，例如：開車" autocomplete="off"><button class="btn sm ghost" data-act="addTrig">加入</button></div>`;break;
@@ -462,7 +468,7 @@ function vToday(){const ps=active(),r=S.daily[TK]||{scores:{},hep:{}},{lv}=lastV
  ${needBackup()?`<div class="banner warnb"><b>該備份了。</b>${backupWhy()}<br><button class="btn sm" style="margin-top:8px" data-act="exportFile">匯出備份檔</button></div>`:''}
  ${!ps.length?'':checkedIn()?`<div class="done">✓ 今天已打卡</div>`:`<div class="banner"><b>今天還沒打卡。</b>睡前花 10 秒，填今天整體痛幾分、作業做了沒。</div>`}
  <div class="card"><div class="lbl">今天整體幾分</div>
-  ${ps.length?'':'<div class="empty">建立第一個問題後，這裡每天打分數。</div>'}${ps.map(p=>`<div class="prow"><div class="nm"><span class="pn2">${pdot(p.color)}${esc(p.name)}</span><span>${r.scores[p.id]!=null?r.scores[p.id]+' 分':'未填'}</span></div>${nrs(r.scores[p.id],'dscore',p.id+'|',true)}</div>`).join('')}</div>
+  ${ps.length?'':'<div class="empty">建立第一個問題後，這裡每天打分數。</div>'}${ps.map(p=>`<div class="prow"><div class="nm"><span class="pn2">${pdot(p.color)}${esc(p.name)}</span><span>${r.scores[p.id]!=null?r.scores[p.id]+' 分':'未填'}</span></div>${nrs(r.scores[p.id],'dscore',p.id+'|',true)}<div class="pdesc">${r.scores[p.id]!=null?PAIN[r.scores[p.id]]:'0 完全不痛 ・ 5 影響部分活動 ・ 10 無法忍受'}</div></div>`).join('')}</div>
  <div class="card"><div class="lbl">居家作業<span class="hint">${lv?md(lv.date)+' 回診交代':''}</span></div>
   ${lv&&lv.hep.length?lv.hep.map(h=>`<button class="chk ${r.hep[h.id]?'on':''}" data-act="hep" data-v="${h.id}"><span class="box">${CHECK}</span><span class="t">${esc(h.name)}<small>${esc(h.dose)}</small>${h.how?`<small class="how">${esc(h.how)}</small>`:''}</span></button>`).join(''):'<div class="empty">目前沒有居家作業。</div>'}</div>
  <div class="card"><div class="lbl">今天的事件<span class="hint">${evs.length} 筆</span></div>
@@ -706,14 +712,14 @@ function compactCard(pid){const p=prob(pid);if(!p)return '';const{lv,pv}=lastVis
  const openQ=S.questions.filter(q=>!q.asked);
  return `<div class="capc" id="capCompact">
   <div class="cc-hd"><div class="cc-t">${pdot(p.color)}${esc(p.name)}</div><div class="cc-d">${md(base.date)} ${base.pseudo?'開始記錄':'回診'} → ${md(TK)}・${days} 天</div></div>
-  <div class="cc-stats"><div><small>平均</small><b>${cur.avg!=null?cur.avg.toFixed(1):'—'}</b>${dl(cur.avg,prev&&prev.avg,1)}</div><div><small>最高</small><b>${cur.max??'—'}</b>${dl(cur.max,prev&&prev.max,0)}</div><div><small>發作</small><b>${cur.evs.length}<em>次</em></b>${dl(cur.evs.length,prev&&prev.evs.length,0)}</div></div>
+  <div class="cc-stats"><div><small>平均・${PAIN_L(cur.avg==null?null:Math.round(cur.avg))}</small><b>${cur.avg!=null?cur.avg.toFixed(1):'—'}</b>${dl(cur.avg,prev&&prev.avg,1)}</div><div><small>最高・${PAIN_L(cur.max)}</small><b>${cur.max??'—'}</b>${dl(cur.max,prev&&prev.max,0)}</div><div><small>發作</small><b>${cur.evs.length}<em>次</em></b>${dl(cur.evs.length,prev&&prev.evs.length,0)}</div></div>
   ${prev?'<div class="cc-note">箭頭為與前一次回診區間比較</div>':''}
   ${views.length?`<div class="cc-map">${views.map(v=>`<figure><svg viewBox="${vbStr(v)}">${figure(v,{fill,noSide:true})}${pinDots(v,pins,18,false)}</svg><figcaption>${v==='front'?'正面':'背面'}</figcaption></figure>`).join('')}</div>`:''}
   <div class="cc-body"><div class="cc-rows">${row('部位',esc(topArea.join('、')||regionText(p)))}${row('誘發',esc(trig.map(([t,n])=>`${t} ${n}`).join('、')))}${row('有效',esc(good.join('、')))}${row('無效',esc(bad.join('、')))}
     ${row('性質',qual.map(([q,n])=>esc(q)+' '+n+(prevQ.has(q)?'':'<i class="nw">新</i>')).join('、'))}${base.hep.length?row('作業',`${hepDays.length} 天中有 ${full} 天全部完成`):''}</div></div>
   <div class="cc-chart">${chart(pid,base.date).replace(/<div class="legend">[\s\S]*$/,'')}</div>
   ${openQ.length?`<div class="cc-q"><b>想問</b>${openQ.map((q,i)=>`<div>${i+1}. ${esc(q.text)}</div>`).join('')}</div>`:''}
-  <div class="cc-ft">分數 0–10（NRS）・黑線＝每日分數・圓點＝發作・白點＝最痛點・${md(TK)} 產生</div></div>`}
+  <div class="cc-ft">分數 0–10（NRS）：1–3 輕微、4–6 中度、7–9 嚴重、10 最痛・黑線＝每日分數・圓點＝發作・白點＝最痛點・${md(TK)} 產生</div></div>`}
 async function makeCompact(){const pid=S.sumPid&&prob(S.sumPid)&&prob(S.sumPid).status==='active'?S.sumPid:(active()[0]||{}).id;if(!pid)return;
  S.sheet={type:'img',mode:'compact'};render();
  try{const lib=await loadH2I();const host=document.getElementById('capHost');host.innerHTML=compactCard(pid);const node=document.getElementById('capCompact');
